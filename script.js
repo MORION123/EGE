@@ -4,7 +4,7 @@ const CLOUD_CONFIG = {
     BASE_URL: 'https://api.jsonbin.io/v3/b'
 };
 
-// Банк заданий (остаётся без изменений)
+// Банк заданий
 const questionBank = {
     orthoepy: [
         {
@@ -114,7 +114,6 @@ const questionBank = {
     ]
 };
 
-// Объединяем все задания
 const allQuestions = [
     ...questionBank.orthoepy,
     ...questionBank.paronyms,
@@ -123,7 +122,6 @@ const allQuestions = [
     ...questionBank.punctuation
 ];
 
-// Данные уроков
 const lessons = [
     { id: 0, title: "Орфоэпия (ударения)", completed: false, unlocked: true, questionIndices: [0, 1, 2] },
     { id: 1, title: "Паронимы", completed: false, unlocked: false, questionIndices: [3, 4] },
@@ -132,7 +130,6 @@ const lessons = [
     { id: 4, title: "Пунктуация", completed: false, unlocked: false, questionIndices: [9, 10] }
 ];
 
-// Глобальное состояние
 let currentUser = null;
 let currentXP = 0;
 let lives = 3;
@@ -144,7 +141,6 @@ let reviveCountdown = null;
 let isSyncing = false;
 let syncQueue = [];
 
-// DOM элементы
 let lessonsPath, xpFill, xpText, livesContainer, owlTooltip;
 let lessonModal, closeModal, lessonTitle, currentQuestionNum, totalQuestions;
 let questionText, answersGrid, explanationDiv, explanationText;
@@ -153,10 +149,8 @@ let completeModal, continueBtn, completeTitle, completeText;
 let authScreen, mainApp, usernameSpan, userAvatar, logoutBtn, syncStatus;
 
 // ==================== АВТОРИЗАЦИЯ ====================
-// Хранилище пользователей (в localStorage + облако)
 const usersDB = {};
 
-// Загрузка пользователей из localStorage
 function loadUsers() {
     const saved = localStorage.getItem('egelingo_users');
     if (saved) {
@@ -165,12 +159,10 @@ function loadUsers() {
     }
 }
 
-// Сохранение пользователей
 function saveUsers() {
     localStorage.setItem('egelingo_users', JSON.stringify(usersDB));
 }
 
-// Регистрация
 function register(email, password, name) {
     email = email.toLowerCase().trim();
     
@@ -185,7 +177,7 @@ function register(email, password, name) {
     }
     
     usersDB[email] = {
-        password: btoa(password), // простое кодирование (не для продакшена)
+        password: btoa(password),
         name: name || email.split('@')[0],
         createdAt: new Date().toISOString()
     };
@@ -194,7 +186,6 @@ function register(email, password, name) {
     return true;
 }
 
-// Вход
 function login(email, password) {
     email = email.toLowerCase().trim();
     const user = usersDB[email];
@@ -223,7 +214,6 @@ function showAuthError(message) {
     const errorDiv = document.createElement('div');
     errorDiv.className = 'auth-error';
     errorDiv.textContent = message;
-    errorDiv.style.cssText = 'color: #e53e3e; font-size: 14px; margin-top: 10px; text-align: center;';
     
     const activeForm = document.querySelector('.auth-form:not([style*="display: none"])');
     const existingError = activeForm?.querySelector('.auth-error');
@@ -670,7 +660,6 @@ function showError(message) {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('📱 App initializing...');
     
-    // Получаем элементы
     authScreen = document.getElementById('authScreen');
     mainApp = document.getElementById('mainApp');
     usernameSpan = document.getElementById('username');
@@ -700,10 +689,8 @@ document.addEventListener('DOMContentLoaded', () => {
     completeTitle = document.getElementById('completeTitle');
     completeText = document.getElementById('completeText');
     
-    // Загружаем пользователей
     loadUsers();
     
-    // Переключение между вкладками
     const tabs = document.querySelectorAll('.auth-tab');
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
@@ -723,7 +710,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
-    // Кнопка входа
     document.getElementById('loginBtn').addEventListener('click', () => {
         const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPassword').value;
@@ -740,7 +726,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // Кнопка регистрации
     document.getElementById('registerBtn').addEventListener('click', () => {
         const name = document.getElementById('registerName').value;
         const email = document.getElementById('registerEmail').value;
@@ -759,7 +744,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // Проверяем сохранённую сессию
     const savedUser = localStorage.getItem('egelingo_user');
     if (savedUser) {
         currentUser = JSON.parse(savedUser);
@@ -771,7 +755,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // События
     closeModal.addEventListener('click', closeLessonModal);
     reviveBtn.addEventListener('click', reviveLives);
     continueBtn.addEventListener('click', () => {
@@ -785,7 +768,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target === completeModal) completeModal.classList.remove('active');
     });
     
-    // Подсказка совы
     const owlAvatar = document.getElementById('owlAvatar');
     if (owlAvatar) {
         owlAvatar.addEventListener('click', () => {
@@ -802,7 +784,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Обработка онлайн/офлайн
     window.addEventListener('online', () => {
         updateSyncStatus('syncing', 'Восстановление связи...');
         saveToCloud();
@@ -815,7 +796,6 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('✅ App ready');
 });
 
-// Service Worker (опционально, если есть sw.js)
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/EGE/sw.js')
         .catch(err => console.log('SW not available'));
