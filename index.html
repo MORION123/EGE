@@ -2,91 +2,157 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>EgeLingo - Подготовка к ЕГЭ по математике</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#4a6cf7">
+    <meta name="description" content="EgeLingo - подготовка к ЕГЭ по русскому языку в игровом формате">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2232/2232688.png">
+    <title>EgeLingo - ЕГЭ в игровом формате</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="app-container">
-        <!-- Header с XP и жизнями -->
-        <header class="header">
-            <div class="xp-container">
-                <div class="xp-icon">⭐</div>
-                <div class="xp-bar-wrapper">
-                    <div class="xp-bar">
-                        <div class="xp-fill" id="xpFill"></div>
-                    </div>
-                    <span class="xp-text" id="xpText">0 XP</span>
+    <div class="app-container" id="appContainer">
+        <!-- Экран авторизации -->
+        <div class="auth-screen" id="authScreen">
+            <div class="auth-card">
+                <div class="auth-logo">🦉 EgeLingo</div>
+                <h1>Готовься к ЕГЭ<br>с удовольствием</h1>
+                <p>Интерактивные уроки, реальные задания с сайта «Решу ЕГЭ»</p>
+                <button class="google-btn" id="googleLoginBtn">
+                    <span class="google-icon">G</span>
+                    Войти через Google
+                </button>
+                <div class="auth-footer">
+                    <span>🎓 100+ заданий</span>
+                    <span>⭐ Геймификация</span>
+                    <span>📊 Статистика</span>
                 </div>
-            </div>
-            <div class="lives-container" id="livesContainer">
-                <div class="life">❤️</div>
-                <div class="life">❤️</div>
-                <div class="life">❤️</div>
-            </div>
-        </header>
-
-        <!-- Главный экран с дорожкой уроков -->
-        <main class="main-content">
-            <div class="path-container">
-                <h1 class="path-title">📚 Курс ЕГЭ. Профильная математика</h1>
-                <div class="lessons-path" id="lessonsPath">
-                    <!-- Уроки будут добавлены через JS -->
-                </div>
-            </div>
-        </main>
-
-        <!-- Аватар совы с подсказками -->
-        <div class="owl-avatar" id="owlAvatar">
-            <div class="owl-icon">🦉</div>
-            <div class="owl-tooltip" id="owlTooltip">
-                Начни с первого урока!
             </div>
         </div>
 
-        <!-- Модальное окно урока -->
-        <div class="modal" id="lessonModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2 id="lessonTitle">Квадратные корни</h2>
-                    <button class="close-modal" id="closeModal">&times;</button>
+        <!-- Основное приложение (скрыто до авторизации) -->
+        <div class="main-app" id="mainApp" style="display: none;">
+            <!-- Header с XP и жизнями -->
+            <header class="header">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">👤</div>
+                    <span class="username" id="username">Ученик</span>
                 </div>
-                <div class="progress-indicator">
-                    <span id="currentQuestionNum">1</span> / <span id="totalQuestions">3</span>
-                </div>
-                <div class="question-card" id="questionCard">
-                    <p class="question-text" id="questionText">Загрузка...</p>
-                    <div class="answers-grid" id="answersGrid">
-                        <!-- Кнопки ответов -->
+                <div class="xp-container">
+                    <div class="xp-icon">⭐</div>
+                    <div class="xp-bar-wrapper">
+                        <div class="xp-bar">
+                            <div class="xp-fill" id="xpFill"></div>
+                        </div>
+                        <span class="xp-text" id="xpText">0 XP</span>
                     </div>
                 </div>
-            </div>
-        </div>
+                <div class="lives-container" id="livesContainer">
+                    <div class="life">❤️</div>
+                    <div class="life">❤️</div>
+                    <div class="life">❤️</div>
+                </div>
+                <button class="logout-btn" id="logoutBtn" title="Выйти">🚪</button>
+            </header>
 
-        <!-- Окно восстановления жизней -->
-        <div class="modal" id="reviveModal">
-            <div class="modal-content revive-content">
-                <div class="revive-icon">💔</div>
-                <h2>Жизни закончились!</h2>
-                <p id="reviveTimerText">Подождите 30 секунд</p>
-                <button class="btn-revive" id="reviveBtn" disabled>Восстановить</button>
-            </div>
-        </div>
+            <!-- Главный экран с дорожкой уроков -->
+            <main class="main-content">
+                <div class="path-container">
+                    <h1 class="path-title">📚 Курс ЕГЭ. Русский язык</h1>
+                    <div class="lessons-path" id="lessonsPath">
+                        <!-- Уроки будут добавлены через JS -->
+                    </div>
+                </div>
+            </main>
 
-        <!-- Окно завершения урока -->
-        <div class="modal" id="completeModal">
-            <div class="modal-content complete-content">
-                <div class="complete-icon">🎉</div>
-                <h2 id="completeTitle">Урок пройден!</h2>
-                <p id="completeText">+30 XP</p>
-                <button class="btn-continue" id="continueBtn">Продолжить</button>
+            <!-- Аватар совы с подсказками -->
+            <div class="owl-avatar" id="owlAvatar">
+                <div class="owl-icon">🦉</div>
+                <div class="owl-tooltip" id="owlTooltip">
+                    Начни с первого урока!
+                </div>
+            </div>
+
+            <!-- Модальное окно урока -->
+            <div class="modal" id="lessonModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 id="lessonTitle">Задание</h2>
+                        <button class="close-modal" id="closeModal">&times;</button>
+                    </div>
+                    <div class="progress-indicator">
+                        <span id="currentQuestionNum">1</span> / <span id="totalQuestions">3</span>
+                    </div>
+                    <div class="question-card" id="questionCard">
+                        <p class="question-text" id="questionText">Загрузка...</p>
+                        <div class="answers-grid" id="answersGrid">
+                            <!-- Кнопки ответов -->
+                        </div>
+                        <div class="explanation" id="explanation" style="display: none;">
+                            <strong>📖 Пояснение:</strong>
+                            <p id="explanationText"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Окно восстановления жизней -->
+            <div class="modal" id="reviveModal">
+                <div class="modal-content revive-content">
+                    <div class="revive-icon">💔</div>
+                    <h2>Жизни закончились!</h2>
+                    <p id="reviveTimerText">Подождите 30 секунд</p>
+                    <button class="btn-revive" id="reviveBtn" disabled>Восстановить</button>
+                </div>
+            </div>
+
+            <!-- Окно завершения урока -->
+            <div class="modal" id="completeModal">
+                <div class="modal-content complete-content">
+                    <div class="complete-icon">🎉</div>
+                    <h2 id="completeTitle">Урок пройден!</h2>
+                    <p id="completeText">+30 XP</p>
+                    <button class="btn-continue" id="continueBtn">Продолжить</button>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- Firebase SDK для Google Auth -->
+    <script type="module">
+        // Импорт Firebase (используем CDN)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        
+        // Конфигурация Firebase (замените на свои данные или используйте эмуляцию)
+        // Для демо используем тестовую конфигурацию - для production замените на свои
+        const firebaseConfig = {
+            apiKey: "AIzaSyB0n5P9X8K7J6H5G4F3E2D1C0B9A8Z7Y6X5W4V3",
+            authDomain: "egelingo-demo.firebaseapp.com",
+            projectId: "egelingo-demo",
+            storageBucket: "egelingo-demo.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abc123def456"
+        };
+        
+        // Инициализация Firebase
+        let app, auth;
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+        } catch (e) {
+            console.warn("Firebase init error, using localStorage auth fallback");
+        }
+        
+        window.firebaseAuth = auth;
+        window.GoogleAuthProvider = GoogleAuthProvider;
+        window.signInWithPopup = signInWithPopup;
+        window.signOut = signOut;
+        window.onAuthStateChanged = onAuthStateChanged;
+    </script>
     <script src="script.js"></script>
 </body>
 </html>
