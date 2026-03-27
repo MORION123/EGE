@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#4a6cf7">
-    <meta name="description" content="EgeLingo - подготовка к ЕГЭ по математике">
+    <meta name="description" content="EgeLingo - подготовка к ЕГЭ">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="111.png">
     <link rel="apple-touch-icon" href="111.png">
-    <title>EgeLingo - ЕГЭ Математика</title>
+    <title>EgeLingo - ЕГЭ Тренажёр</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -23,8 +23,8 @@
                     <img src="111.png" alt="EgeLingo" class="logo-img">
                     <span>EgeLingo</span>
                 </div>
-                <h1>Готовься к ЕГЭ<br>по математике</h1>
-                <p>Реальные задания с сайта «Решу ЕГЭ»</p>
+                <h1>Готовься к ЕГЭ<br>с удовольствием</h1>
+                <p>Интерактивные задания с сайта «Решу ЕГЭ»</p>
                 
                 <div class="auth-tabs">
                     <button class="auth-tab active" data-tab="login">Вход</button>
@@ -44,9 +44,9 @@
                 </div>
                 
                 <div class="auth-footer">
-                    <span>🎓 21 задание</span>
+                    <span>🎓 21+ заданий</span>
                     <span>⭐ Система уровней</span>
-                    <span>📊 Прогресс на устройстве</span>
+                    <span>🏆 Достижения</span>
                 </div>
             </div>
         </div>
@@ -70,16 +70,34 @@
                 <button class="logout-btn" id="logoutBtn" title="Выйти">🚪</button>
             </header>
 
+            <div class="stats-bar" id="statsBar" style="display: none;">
+                <div class="stat-card">
+                    <span class="stat-value" id="totalTasks">0</span>
+                    <span class="stat-label">решено</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value" id="correctPercent">0%</span>
+                    <span class="stat-label">верных</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value" id="streak">0</span>
+                    <span class="stat-label">серия 🔥</span>
+                </div>
+            </div>
+
+            <div class="subject-selector">
+                <button class="subject-btn active" data-subject="math">📐 Математика</button>
+                <button class="subject-btn" data-subject="russian">📖 Русский язык</button>
+                <button class="subject-btn" data-subject="physics">⚡ Физика</button>
+                <button class="subject-btn" data-subject="informatics">💻 Информатика</button>
+            </div>
+
             <main class="main-content">
-                <!-- Выбор задания -->
                 <div class="task-selector">
-                    <h2>📌 Выбери задание ЕГЭ</h2>
-                    <div class="tasks-grid" id="tasksGrid">
-                        <!-- Кнопки заданий 1-21 будут добавлены через JS -->
-                    </div>
+                    <h2 id="subjectTitle">📌 Выбери задание ЕГЭ</h2>
+                    <div class="tasks-grid" id="tasksGrid"></div>
                 </div>
 
-                <!-- Карточка задания -->
                 <div class="task-card" id="taskCard" style="display: none;">
                     <div class="task-header">
                         <h3 id="taskTitle">Задание 1</h3>
@@ -100,9 +118,14 @@
                 </div>
             </main>
 
+            <div class="achievements-panel" id="achievementsPanel">
+                <h3>🏆 Достижения</h3>
+                <div class="achievements-grid" id="achievementsGrid"></div>
+            </div>
+
             <div class="owl-avatar" id="owlAvatar">
                 <div class="owl-icon">🦉</div>
-                <div class="owl-tooltip" id="owlTooltip">Выбери задание и реши его!</div>
+                <div class="owl-tooltip" id="owlTooltip">Выбери предмет и задание!</div>
             </div>
         </div>
     </div>
