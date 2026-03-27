@@ -1,15 +1,13 @@
 // ==================== КОНФИГУРАЦИЯ ====================
-// Google OAuth Client ID
 const GOOGLE_CLIENT_ID = '549758991862-888ndj9ubsjl5u8r04i804gh05d0mbbv.apps.googleusercontent.com';
 
-// JSONBin.io конфигурация (для облачного хранения прогресса)
+// JSONBin.io конфигурация
 const CLOUD_CONFIG = {
     API_KEY: '$2a$10$Vxl9lZUaGmUANs2JQBixL.O37Ot8zteKKSAR98p.eP6.aTeQ4Brwu',
-    BIN_ID: null,
     BASE_URL: 'https://api.jsonbin.io/v3/b'
 };
 
-// Банк заданий с сайта «Решу ЕГЭ» (расширенный)
+// Банк заданий с сайта «Решу ЕГЭ»
 const questionBank = {
     orthoepy: [
         {
@@ -28,20 +26,20 @@ const questionBank = {
             text: "В каком слове ударение падает на второй слог?",
             answers: ["докумЕнт", "каталОг", "красИвее", "квартАл"],
             correct: 2,
-            explanation: "В слове «красИвее» ударение падает на второй слог. Запомните: красИвее, обеспЕчение, оптОвый."
+            explanation: "В слове «красИвее» ударение падает на второй слог."
         }
     ],
     paronyms: [
         {
             text: "В каком предложении вместо слова ДЛИННЫЙ нужно употребить ДЛИТЕЛЬНЫЙ?",
             answers: [
-                "ДЛИННЫЙ хвост павлина переливался всеми цветами.",
-                "Нам предстоял ДЛИННЫЙ путь через пустыню.",
+                "ДЛИННЫЙ хвост павлина переливался.",
+                "Нам предстоял ДЛИННЫЙ путь.",
                 "После ДЛИННОГО совещания все разошлись.",
-                "ДЛИННЫЙ свисток паровоза разбудил округу."
+                "ДЛИННЫЙ свисток разбудил округу."
             ],
             correct: 2,
-            explanation: "ДЛИТЕЛЬНЫЙ — о времени, ДЛИННЫЙ — о размере. Правильно: после ДЛИТЕЛЬНОГО совещания."
+            explanation: "ДЛИТЕЛЬНЫЙ — о времени, ДЛИННЫЙ — о размере."
         },
         {
             text: "В каком предложении вместо слова ВЕЧНЫЙ нужно употребить ВЕКОВЕЧНЫЙ?",
@@ -83,7 +81,7 @@ const questionBank = {
         {
             text: "В каком ряду во всех словах пропущена безударная проверяемая гласная корня?",
             answers: [
-                "ст...рожил (дом), ум...лчать, р...сток",
+                "ст...рожил, ум...лчать, р...сток",
                 "зар...сли, пок...сившийся, оп...здание",
                 "п...стух, к...залось, уд...вление",
                 "пл...вец, выр...щенный, р...внина"
@@ -100,35 +98,35 @@ const questionBank = {
                 "все варианты верны"
             ],
             correct: 3,
-            explanation: "Во всех словах чередующиеся гласные: -кас-/-кос-, -раст-/-ращ-/-рос-, -зар-/-зор-."
+            explanation: "Во всех словах чередующиеся гласные."
         }
     ],
     punctuation: [
         {
-            text: "В каком варианте ответа правильно указаны все цифры, на месте которых должны стоять запятые? «Солнце (1) выглянувшее из-за туч (2) осветило лес (3) и (4) заиграло на траве.»",
+            text: "В каком варианте ответа правильно указаны все цифры, на месте которых должны стоять запятые? «Солнце (1) выглянувшее из-за туч (2) осветило лес (3) и (4) заиграло.»",
             answers: ["1,2", "1,2,3", "1,2,3,4", "2,3,4"],
             correct: 0,
-            explanation: "Причастный оборот «выглянувшее из-за туч» выделяется запятыми (1 и 2)."
+            explanation: "Причастный оборот выделяется запятыми (1 и 2)."
         },
         {
             text: "В каком варианте ответа правильно указаны все цифры, на месте которых должны стоять запятые? «Дождь (1) усиливающийся с каждой минутой (2) превратился в ливень (3) и (4) затопил улицы.»",
             answers: ["1,2", "1,2,3", "1,2,4", "1,2,3,4"],
             correct: 0,
-            explanation: "Причастный оборот «усиливающийся с каждой минутой» выделяется запятыми (1 и 2)."
+            explanation: "Причастный оборот выделяется запятыми (1 и 2)."
         }
     ]
 };
 
 // Объединяем все задания
 const allQuestions = [
-    ...questionBank.orthoepy,      // 3 вопроса
-    ...questionBank.paronyms,      // 2 вопроса
-    ...questionBank.grammar,       // 2 вопроса
-    ...questionBank.roots,         // 2 вопроса
-    ...questionBank.punctuation    // 2 вопроса
+    ...questionBank.orthoepy,
+    ...questionBank.paronyms,
+    ...questionBank.grammar,
+    ...questionBank.roots,
+    ...questionBank.punctuation
 ];
 
-// Данные уроков (11 вопросов, распределённые по урокам)
+// Данные уроков
 const lessons = [
     { id: 0, title: "Орфоэпия (ударения)", completed: false, unlocked: true, questionIndices: [0, 1, 2] },
     { id: 1, title: "Паронимы", completed: false, unlocked: false, questionIndices: [3, 4] },
@@ -155,31 +153,13 @@ let lessonModal, closeModal, lessonTitle, currentQuestionNum, totalQuestions;
 let questionText, answersGrid, explanationDiv, explanationText;
 let reviveModal, reviveBtn, reviveTimerText;
 let completeModal, continueBtn, completeTitle, completeText;
-let authScreen, mainApp, usernameSpan, userAvatar, logoutBtn, syncStatus, googleLoginBtn;
+let authScreen, mainApp, usernameSpan, userAvatar, logoutBtn, syncStatus;
 
 // ==================== GOOGLE AUTH ====================
-// Инициализация Google Sign-In
-function initGoogleAuth() {
-    if (!window.google || !window.google.accounts) {
-        console.log('Google API not loaded yet, waiting...');
-        setTimeout(initGoogleAuth, 500);
-        return;
-    }
-    
-    window.google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: handleGoogleCredentialResponse,
-        auto_select: false,
-        cancel_on_tap_outside: true
-    });
-    
-    console.log('Google Auth initialized');
-}
-
-// Обработчик ответа от Google
-async function handleGoogleCredentialResponse(response) {
+// Функция обратного вызова после успешного входа
+window.handleCredentialResponse = async (response) => {
     try {
-        showLoading(true);
+        console.log('✅ Google response received');
         
         // Декодируем JWT токен
         const payload = parseJwt(response.credential);
@@ -188,9 +168,10 @@ async function handleGoogleCredentialResponse(response) {
             uid: payload.sub,
             name: payload.name,
             email: payload.email,
-            picture: payload.picture,
-            token: response.credential
+            picture: payload.picture
         };
+        
+        console.log('✅ User logged in:', currentUser.name);
         
         // Сохраняем локально
         localStorage.setItem('egelingo_user', JSON.stringify(currentUser));
@@ -199,13 +180,11 @@ async function handleGoogleCredentialResponse(response) {
         await loadFromCloud();
         
         showMainApp();
-        showLoading(false);
     } catch (error) {
-        console.error('Login error:', error);
+        console.error('❌ Login error:', error);
         showError('Ошибка входа. Попробуйте ещё раз.');
-        showLoading(false);
     }
-}
+};
 
 // Парсинг JWT токена
 function parseJwt(token) {
@@ -217,22 +196,46 @@ function parseJwt(token) {
     return JSON.parse(jsonPayload);
 }
 
-// Кнопка входа через Google
-function handleGoogleLogin() {
-    if (window.google && window.google.accounts) {
-        window.google.accounts.id.prompt();
+// Инициализация Google кнопки
+function initGoogleButton() {
+    if (!window.google || !window.google.accounts) {
+        console.log('⏳ Google API not ready, retrying in 500ms...');
+        setTimeout(initGoogleButton, 500);
+        return;
+    }
+    
+    console.log('✅ Google API ready, initializing...');
+    
+    window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: window.handleCredentialResponse,
+        auto_select: false,
+        cancel_on_tap_outside: true
+    });
+    
+    const buttonContainer = document.getElementById('googleSignInButton');
+    if (buttonContainer) {
+        window.google.accounts.id.renderButton(
+            buttonContainer,
+            {
+                type: 'standard',
+                theme: 'outline',
+                size: 'large',
+                text: 'signin_with',
+                shape: 'rectangular',
+                logo_alignment: 'left',
+                width: 280
+            }
+        );
+        console.log('✅ Google button rendered');
     } else {
-        showError('Загрузка Google сервисов... Попробуйте обновить страницу');
-        // Повторная попытка инициализации
-        setTimeout(initGoogleAuth, 1000);
+        console.error('❌ Button container not found');
     }
 }
 
 // ==================== ОБЛАЧНОЕ ХРАНЕНИЕ ====================
-// Сохранить прогресс в облако
 async function saveToCloud() {
     if (!currentUser) return;
-    
     if (isSyncing) {
         syncQueue.push(saveToCloud);
         return;
@@ -260,8 +263,7 @@ async function saveToCloud() {
         let binId = localStorage.getItem(`egelingo_bin_${currentUser.uid}`);
         
         if (binId) {
-            // Обновляем существующий bin
-            const response = await fetch(`${CLOUD_CONFIG.BASE_URL}/${binId}`, {
+            await fetch(`${CLOUD_CONFIG.BASE_URL}/${binId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -269,10 +271,7 @@ async function saveToCloud() {
                 },
                 body: JSON.stringify(progress)
             });
-            
-            if (!response.ok) throw new Error('Update failed');
         } else {
-            // Создаём новый bin
             const response = await fetch(CLOUD_CONFIG.BASE_URL, {
                 method: 'POST',
                 headers: {
@@ -282,11 +281,8 @@ async function saveToCloud() {
                 },
                 body: JSON.stringify(progress)
             });
-            
-            if (!response.ok) throw new Error('Create failed');
-            
             const data = await response.json();
-            binId = data.metadata.id;
+            const binId = data.metadata.id;
             localStorage.setItem(`egelingo_bin_${currentUser.uid}`, binId);
         }
         
@@ -295,24 +291,20 @@ async function saveToCloud() {
             if (syncStatus) syncStatus.style.opacity = '0';
         }, 2000);
         
-        // Удаляем офлайн-кэш если был
         localStorage.removeItem(`egelingo_offline_${currentUser.uid}`);
         
     } catch (error) {
         console.error('Cloud save error:', error);
         updateSyncStatus('error', 'Офлайн-режим');
-        // Сохраняем в офлайн-кэш
         localStorage.setItem(`egelingo_offline_${currentUser.uid}`, JSON.stringify(progress));
     } finally {
         isSyncing = false;
         if (syncQueue.length) {
-            const next = syncQueue.shift();
-            setTimeout(next, 1000);
+            setTimeout(syncQueue.shift(), 1000);
         }
     }
 }
 
-// Загрузить прогресс из облака
 async function loadFromCloud() {
     if (!currentUser) return;
     
@@ -344,9 +336,8 @@ async function loadFromCloud() {
                 });
                 
                 updateSyncStatus('success', 'Загружено из облака');
-                console.log('Cloud data loaded');
+                console.log('✅ Cloud data loaded');
             } else {
-                console.log('No cloud data, using local');
                 loadLocalData();
             }
         } catch (error) {
@@ -355,7 +346,6 @@ async function loadFromCloud() {
             updateSyncStatus('error', 'Офлайн-режим');
         }
     } else {
-        // Проверяем офлайн-кэш
         const offlineData = localStorage.getItem(`egelingo_offline_${currentUser.uid}`);
         if (offlineData) {
             const progress = JSON.parse(offlineData);
@@ -379,9 +369,8 @@ async function loadFromCloud() {
     updateUI();
 }
 
-// Загрузка локальных данных
 function loadLocalData() {
-    const saved = localStorage.getItem(`egelingo_progress_${currentUser.uid}`);
+    const saved = localStorage.getItem(`egelingo_progress_${currentUser?.uid}`);
     if (saved) {
         const progress = JSON.parse(saved);
         currentXP = progress.xp || 0;
@@ -394,20 +383,18 @@ function loadLocalData() {
                 lesson.unlocked = savedLesson.unlocked;
             }
         });
-        console.log('Local data loaded');
+        console.log('✅ Local data loaded');
     } else {
-        // Начальная инициализация
         currentXP = 0;
         lives = 3;
         lessons.forEach((lesson, idx) => {
             lesson.completed = false;
             lesson.unlocked = idx === 0;
         });
-        console.log('Fresh start');
+        console.log('✅ Fresh start');
     }
 }
 
-// ==================== ЛОКАЛЬНОЕ СОХРАНЕНИЕ ====================
 function saveProgress() {
     if (!currentUser) return;
     
@@ -422,14 +409,12 @@ function saveProgress() {
     };
     localStorage.setItem(`egelingo_progress_${currentUser.uid}`, JSON.stringify(progress));
     
-    // Отправляем в облако с задержкой (не спамим)
     if (window.cloudSaveTimeout) clearTimeout(window.cloudSaveTimeout);
     window.cloudSaveTimeout = setTimeout(() => {
         saveToCloud();
     }, 3000);
 }
 
-// Обновить статус синхронизации
 function updateSyncStatus(status, text) {
     if (!syncStatus) return;
     syncStatus.className = 'sync-status';
@@ -438,105 +423,10 @@ function updateSyncStatus(status, text) {
     
     const textSpan = syncStatus.querySelector('.sync-text');
     if (textSpan) textSpan.textContent = text;
-    
     syncStatus.style.opacity = '1';
 }
 
-// ==================== ИНИЦИАЛИЗАЦИЯ ====================
-document.addEventListener('DOMContentLoaded', () => {
-    // Получаем элементы
-    authScreen = document.getElementById('authScreen');
-    mainApp = document.getElementById('mainApp');
-    usernameSpan = document.getElementById('username');
-    userAvatar = document.getElementById('userAvatar');
-    logoutBtn = document.getElementById('logoutBtn');
-    syncStatus = document.getElementById('syncStatus');
-    googleLoginBtn = document.getElementById('googleLoginBtn');
-    
-    lessonsPath = document.getElementById('lessonsPath');
-    xpFill = document.getElementById('xpFill');
-    xpText = document.getElementById('xpText');
-    livesContainer = document.getElementById('livesContainer');
-    owlTooltip = document.getElementById('owlTooltip');
-    lessonModal = document.getElementById('lessonModal');
-    closeModal = document.getElementById('closeModal');
-    lessonTitle = document.getElementById('lessonTitle');
-    currentQuestionNum = document.getElementById('currentQuestionNum');
-    totalQuestions = document.getElementById('totalQuestions');
-    questionText = document.getElementById('questionText');
-    answersGrid = document.getElementById('answersGrid');
-    explanationDiv = document.getElementById('explanation');
-    explanationText = document.getElementById('explanationText');
-    reviveModal = document.getElementById('reviveModal');
-    reviveBtn = document.getElementById('reviveBtn');
-    reviveTimerText = document.getElementById('reviveTimerText');
-    completeModal = document.getElementById('completeModal');
-    continueBtn = document.getElementById('continueBtn');
-    completeTitle = document.getElementById('completeTitle');
-    completeText = document.getElementById('completeText');
-    
-    // Инициализируем Google Auth
-    initGoogleAuth();
-    
-    // Кнопка входа
-    if (googleLoginBtn) {
-        googleLoginBtn.addEventListener('click', handleGoogleLogin);
-    }
-    
-    // Проверяем сохранённую сессию
-    const savedUser = localStorage.getItem('egelingo_user');
-    if (savedUser) {
-        currentUser = JSON.parse(savedUser);
-        loadFromCloud().then(() => {
-            showMainApp();
-        }).catch(() => {
-            loadLocalData();
-            showMainApp();
-        });
-    }
-    
-    // События
-    closeModal.addEventListener('click', closeLessonModal);
-    reviveBtn.addEventListener('click', reviveLives);
-    continueBtn.addEventListener('click', () => {
-        completeModal.classList.remove('active');
-    });
-    logoutBtn.addEventListener('click', handleLogout);
-    
-    window.addEventListener('click', (e) => {
-        if (e.target === lessonModal) closeLessonModal();
-        if (e.target === reviveModal) reviveModal.classList.remove('active');
-        if (e.target === completeModal) completeModal.classList.remove('active');
-    });
-    
-    // Подсказка совы
-    const owlAvatar = document.getElementById('owlAvatar');
-    if (owlAvatar) {
-        owlAvatar.addEventListener('click', () => {
-            if (lessons[0]?.unlocked && !lessons[0]?.completed) {
-                owlTooltip.textContent = 'Нажми на первый урок, чтобы начать!';
-            } else if (lessons[0]?.completed) {
-                owlTooltip.textContent = 'Отлично! Продолжай в том же духе! 🎯';
-            } else {
-                owlTooltip.textContent = 'Начни с первого урока!';
-            }
-            setTimeout(() => {
-                owlTooltip.style.display = 'none';
-            }, 2000);
-        });
-    }
-    
-    // Обработка онлайн/офлайн
-    window.addEventListener('online', () => {
-        updateSyncStatus('syncing', 'Восстановление связи...');
-        saveToCloud();
-    });
-    
-    window.addEventListener('offline', () => {
-        updateSyncStatus('error', 'Офлайн-режим');
-    });
-});
-
+// ==================== ОСНОВНАЯ ЛОГИКА ====================
 function showMainApp() {
     if (authScreen) authScreen.style.display = 'none';
     if (mainApp) mainApp.style.display = 'block';
@@ -554,21 +444,19 @@ function showMainApp() {
 }
 
 function handleLogout() {
-    if (confirm('Вы уверены, что хотите выйти? Ваш прогресс сохранён в облаке.')) {
+    if (confirm('Вы уверены, что хотите выйти?')) {
         localStorage.removeItem('egelingo_user');
         localStorage.removeItem(`egelingo_progress_${currentUser?.uid}`);
         currentUser = null;
         if (authScreen) authScreen.style.display = 'flex';
         if (mainApp) mainApp.style.display = 'none';
         
-        // Сбрасываем Google сессию
         if (window.google?.accounts?.id) {
             window.google.accounts.id.disableAutoSelect();
         }
     }
 }
 
-// ==================== ОСНОВНАЯ ЛОГИКА ПРИЛОЖЕНИЯ ====================
 function renderLessons() {
     if (!lessonsPath) return;
     lessonsPath.innerHTML = '';
@@ -812,16 +700,103 @@ function showError(message) {
     }, 3000);
 }
 
-function showLoading(show) {
-    // Можно добавить индикатор загрузки
-    if (show) {
-        if (syncStatus) updateSyncStatus('syncing', 'Загрузка...');
+// ==================== ИНИЦИАЛИЗАЦИЯ ====================
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('📱 DOM loaded, initializing app...');
+    
+    // Получаем элементы
+    authScreen = document.getElementById('authScreen');
+    mainApp = document.getElementById('mainApp');
+    usernameSpan = document.getElementById('username');
+    userAvatar = document.getElementById('userAvatar');
+    logoutBtn = document.getElementById('logoutBtn');
+    syncStatus = document.getElementById('syncStatus');
+    
+    lessonsPath = document.getElementById('lessonsPath');
+    xpFill = document.getElementById('xpFill');
+    xpText = document.getElementById('xpText');
+    livesContainer = document.getElementById('livesContainer');
+    owlTooltip = document.getElementById('owlTooltip');
+    lessonModal = document.getElementById('lessonModal');
+    closeModal = document.getElementById('closeModal');
+    lessonTitle = document.getElementById('lessonTitle');
+    currentQuestionNum = document.getElementById('currentQuestionNum');
+    totalQuestions = document.getElementById('totalQuestions');
+    questionText = document.getElementById('questionText');
+    answersGrid = document.getElementById('answersGrid');
+    explanationDiv = document.getElementById('explanation');
+    explanationText = document.getElementById('explanationText');
+    reviveModal = document.getElementById('reviveModal');
+    reviveBtn = document.getElementById('reviveBtn');
+    reviveTimerText = document.getElementById('reviveTimerText');
+    completeModal = document.getElementById('completeModal');
+    continueBtn = document.getElementById('continueBtn');
+    completeTitle = document.getElementById('completeTitle');
+    completeText = document.getElementById('completeText');
+    
+    // Инициализируем Google кнопку
+    initGoogleButton();
+    
+    // Проверяем сохранённую сессию
+    const savedUser = localStorage.getItem('egelingo_user');
+    if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        console.log('📀 Found saved user:', currentUser.name);
+        loadFromCloud().then(() => {
+            showMainApp();
+        }).catch(() => {
+            loadLocalData();
+            showMainApp();
+        });
     }
-}
+    
+    // События
+    closeModal.addEventListener('click', closeLessonModal);
+    reviveBtn.addEventListener('click', reviveLives);
+    continueBtn.addEventListener('click', () => {
+        completeModal.classList.remove('active');
+    });
+    logoutBtn.addEventListener('click', handleLogout);
+    
+    window.addEventListener('click', (e) => {
+        if (e.target === lessonModal) closeLessonModal();
+        if (e.target === reviveModal) reviveModal.classList.remove('active');
+        if (e.target === completeModal) completeModal.classList.remove('active');
+    });
+    
+    // Подсказка совы
+    const owlAvatar = document.getElementById('owlAvatar');
+    if (owlAvatar) {
+        owlAvatar.addEventListener('click', () => {
+            if (lessons[0]?.unlocked && !lessons[0]?.completed) {
+                owlTooltip.textContent = 'Нажми на первый урок, чтобы начать!';
+            } else if (lessons[0]?.completed) {
+                owlTooltip.textContent = 'Отлично! Продолжай в том же духе! 🎯';
+            } else {
+                owlTooltip.textContent = 'Начни с первого урока!';
+            }
+            setTimeout(() => {
+                owlTooltip.style.display = 'none';
+            }, 2000);
+        });
+    }
+    
+    // Обработка онлайн/офлайн
+    window.addEventListener('online', () => {
+        updateSyncStatus('syncing', 'Восстановление связи...');
+        saveToCloud();
+    });
+    
+    window.addEventListener('offline', () => {
+        updateSyncStatus('error', 'Офлайн-режим');
+    });
+    
+    console.log('✅ App initialization complete');
+});
 
 // PWA регистрация
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js')
-        .then(reg => console.log('SW registered'))
-        .catch(err => console.log('SW error:', err));
+        .then(reg => console.log('✅ SW registered'))
+        .catch(err => console.log('❌ SW error:', err));
 }
