@@ -21,14 +21,25 @@
                 <div class="auth-logo">🦉 EgeLingo</div>
                 <h1>Готовься к ЕГЭ<br>с удовольствием</h1>
                 <p>Интерактивные уроки, реальные задания с сайта «Решу ЕГЭ»</p>
-                <button class="google-btn" id="googleLoginBtn">
-                    <span class="google-icon">G</span>
-                    Войти через Google
-                </button>
+                <div id="g_id_onload"
+                     data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+                     data-context="signin"
+                     data-ux_mode="popup"
+                     data-login_uri="https://your-domain.com/auth"
+                     data-auto_prompt="false">
+                </div>
+                <div class="g_id_signin"
+                     data-type="standard"
+                     data-shape="rectangular"
+                     data-theme="outline"
+                     data-text="signin_with"
+                     data-size="large"
+                     data-logo_alignment="left">
+                </div>
                 <div class="auth-footer">
                     <span>🎓 100+ заданий</span>
                     <span>⭐ Геймификация</span>
-                    <span>📊 Статистика</span>
+                    <span>☁️ Прогресс в облаке</span>
                 </div>
             </div>
         </div>
@@ -37,7 +48,7 @@
         <div class="main-app" id="mainApp" style="display: none;">
             <!-- Header с XP и жизнями -->
             <header class="header">
-                <div class="user-info">
+                <div class="user-info" id="userInfo">
                     <div class="user-avatar" id="userAvatar">👤</div>
                     <span class="username" id="username">Ученик</span>
                 </div>
@@ -57,6 +68,12 @@
                 </div>
                 <button class="logout-btn" id="logoutBtn" title="Выйти">🚪</button>
             </header>
+
+            <!-- Индикатор синхронизации -->
+            <div class="sync-status" id="syncStatus">
+                <span class="sync-icon">☁️</span>
+                <span class="sync-text">Синхронизировано</span>
+            </div>
 
             <!-- Главный экран с дорожкой уроков -->
             <main class="main-content">
@@ -121,38 +138,8 @@
         </div>
     </div>
 
-    <!-- Firebase SDK для Google Auth -->
-    <script type="module">
-        // Импорт Firebase (используем CDN)
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        
-        // Конфигурация Firebase (замените на свои данные или используйте эмуляцию)
-        // Для демо используем тестовую конфигурацию - для production замените на свои
-        const firebaseConfig = {
-            apiKey: "AIzaSyB0n5P9X8K7J6H5G4F3E2D1C0B9A8Z7Y6X5W4V3",
-            authDomain: "egelingo-demo.firebaseapp.com",
-            projectId: "egelingo-demo",
-            storageBucket: "egelingo-demo.appspot.com",
-            messagingSenderId: "123456789012",
-            appId: "1:123456789012:web:abc123def456"
-        };
-        
-        // Инициализация Firebase
-        let app, auth;
-        try {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-        } catch (e) {
-            console.warn("Firebase init error, using localStorage auth fallback");
-        }
-        
-        window.firebaseAuth = auth;
-        window.GoogleAuthProvider = GoogleAuthProvider;
-        window.signInWithPopup = signInWithPopup;
-        window.signOut = signOut;
-        window.onAuthStateChanged = onAuthStateChanged;
-    </script>
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="script.js"></script>
 </body>
 </html>
