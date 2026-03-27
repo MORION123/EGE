@@ -19,27 +19,142 @@ body {
     position: relative;
 }
 
+/* Auth Screen */
+.auth-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+    padding: 20px;
+}
+
+.auth-card {
+    background: white;
+    border-radius: 40px;
+    padding: 40px 30px;
+    text-align: center;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    animation: slideUp 0.5s ease;
+}
+
+.auth-logo {
+    font-size: 48px;
+    font-weight: 800;
+    margin-bottom: 20px;
+    color: #667eea;
+}
+
+.auth-card h1 {
+    font-size: 28px;
+    margin-bottom: 15px;
+    color: #2d3748;
+}
+
+.auth-card p {
+    color: #718096;
+    margin-bottom: 30px;
+    line-height: 1.5;
+}
+
+.google-btn {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 50px;
+    padding: 14px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: 'Nunito', sans-serif;
+    margin-bottom: 25px;
+}
+
+.google-btn:hover {
+    border-color: #667eea;
+    background: #f7fafc;
+    transform: translateY(-2px);
+}
+
+.google-icon {
+    width: 24px;
+    height: 24px;
+    background: #4285f4;
+    color: white;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.auth-footer {
+    display: flex;
+    justify-content: space-around;
+    padding-top: 20px;
+    border-top: 1px solid #e2e8f0;
+    color: #718096;
+    font-size: 14px;
+}
+
 /* Header */
 .header {
     background: white;
     border-radius: 20px;
-    padding: 15px 20px;
+    padding: 12px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 12px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #f7fafc;
+    padding: 5px 12px;
+    border-radius: 40px;
+}
+
+.user-avatar {
+    font-size: 24px;
+}
+
+.username {
+    font-weight: 600;
+    font-size: 14px;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .xp-container {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     flex: 1;
+    min-width: 120px;
 }
 
 .xp-icon {
-    font-size: 28px;
+    font-size: 24px;
 }
 
 .xp-bar-wrapper {
@@ -49,9 +164,9 @@ body {
 .xp-bar {
     background: #e2e8f0;
     border-radius: 10px;
-    height: 10px;
+    height: 8px;
     overflow: hidden;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
 }
 
 .xp-fill {
@@ -63,24 +178,38 @@ body {
 }
 
 .xp-text {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     color: #4a5568;
 }
 
 .lives-container {
     display: flex;
-    gap: 8px;
+    gap: 5px;
 }
 
 .life {
-    font-size: 24px;
+    font-size: 20px;
     transition: all 0.3s ease;
 }
 
 .life.lost {
     opacity: 0.3;
     filter: grayscale(1);
+}
+
+.logout-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    transition: background 0.3s;
+}
+
+.logout-btn:hover {
+    background: #fed7d7;
 }
 
 /* Main Path */
@@ -271,7 +400,7 @@ body {
 }
 
 .modal-header h2 {
-    font-size: 24px;
+    font-size: 20px;
     color: #2c5282;
 }
 
@@ -297,9 +426,9 @@ body {
 }
 
 .question-text {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 700;
-    margin-bottom: 25px;
+    margin-bottom: 20px;
     line-height: 1.4;
     color: #2d3748;
 }
@@ -307,15 +436,16 @@ body {
 .answers-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 10px;
+    margin-bottom: 20px;
 }
 
 .answer-btn {
-    padding: 15px;
+    padding: 12px;
     background: #f7fafc;
     border: 2px solid #e2e8f0;
     border-radius: 15px;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
     text-align: left;
     cursor: pointer;
@@ -324,7 +454,7 @@ body {
     color: #2d3748;
 }
 
-.answer-btn:hover {
+.answer-btn:hover:not(:disabled) {
     background: #edf2f7;
     transform: translateX(5px);
 }
@@ -332,13 +462,20 @@ body {
 .answer-btn.correct {
     background: #c6f6d5;
     border-color: #38a169;
-    animation: shake 0.3s ease;
 }
 
 .answer-btn.wrong {
     background: #fed7d7;
     border-color: #f56565;
-    animation: shake 0.3s ease;
+}
+
+.explanation {
+    background: #ebf4ff;
+    padding: 15px;
+    border-radius: 15px;
+    margin-top: 15px;
+    font-size: 14px;
+    line-height: 1.5;
 }
 
 /* Revive Modal */
@@ -376,12 +513,8 @@ body {
 
 /* Animations */
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 @keyframes slideUp {
@@ -392,18 +525,6 @@ body {
     to {
         transform: translateY(0);
         opacity: 1;
-    }
-}
-
-@keyframes shake {
-    0%, 100% {
-        transform: translateX(0);
-    }
-    25% {
-        transform: translateX(-5px);
-    }
-    75% {
-        transform: translateX(5px);
     }
 }
 
@@ -420,19 +541,28 @@ body {
     }
     
     .lesson-title {
-        font-size: 16px;
+        font-size: 15px;
     }
     
     .question-text {
-        font-size: 18px;
+        font-size: 16px;
     }
     
     .answer-btn {
-        padding: 12px;
-        font-size: 14px;
+        padding: 10px;
+        font-size: 13px;
     }
     
     .owl-icon {
         font-size: 50px;
+    }
+    
+    .header {
+        gap: 8px;
+    }
+    
+    .username {
+        font-size: 12px;
+        max-width: 80px;
     }
 }
