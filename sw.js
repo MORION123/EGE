@@ -5,7 +5,8 @@ const urlsToCache = [
     '/style.css',
     '/script.js',
     '/manifest.json',
-    'https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap'
+    'https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap',
+    'https://accounts.google.com/gsi/client'
 ];
 
 self.addEventListener('install', event => {
