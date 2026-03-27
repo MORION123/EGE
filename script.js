@@ -7,7 +7,7 @@ const CLOUD_CONFIG = {
 // ФИКСИРОВАННЫЙ ID бина для хранения всех пользователей
 const USERS_BIN_ID = '69c60d616887921da853c0a2';
 
-// Банк заданий (остаётся без изменений)
+// Банк заданий (без изменений)
 const questionBank = {
     orthoepy: [
         {
@@ -143,6 +143,7 @@ let reviveTimeout = null;
 let reviveCountdown = null;
 let isSyncing = false;
 let syncQueue = [];
+let isOnline = navigator.onLine;
 
 let lessonsPath, xpFill, xpText, livesContainer, owlTooltip;
 let lessonModal, closeModal, lessonTitle, currentQuestionNum, totalQuestions;
@@ -151,46 +152,33 @@ let reviveModal, reviveBtn, reviveTimerText;
 let completeModal, continueBtn, completeTitle, completeText;
 let authScreen, mainApp, usernameSpan, userAvatar, logoutBtn, syncStatus;
 
-// ==================== ОБЛАЧНОЕ ХРАНЕНИЕ ПОЛЬЗОВАТЕЛЕЙ ====================
-async function getUsersFromCloud() {
-    try {
-        const response = await fetch(`${CLOUD_CONFIG.BASE_URL}/${USERS_BIN_ID}/latest`, {
-            headers: { 'X-Master-Key': CLOUD_CONFIG.API_KEY }
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            return data.record.users || {};
+// ==================== ЛОКАЛЬНОЕ ХРАНЕНИЕ (ПРИОРИТЕТ) ====================
+// Загружаем пользователей из localStorage (кэш)
+function getUsersFromLocal() {
+    const saved = localStorage.getItem('egelingo_users_cache');
+    if (saved) {
+        try {
+            return JSON.parse(saved);
+        } catch (e) {
+            return {};
         }
-    } catch (error) {
-        console.error('Error loading users:', error);
     }
     return {};
 }
 
-async function saveUsersToCloud(users) {
-    try {
-        const response = await fetch(`${CLOUD_CONFIG.BASE_URL}/${USERS_BIN_ID}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Master-Key': CLOUD_CONFIG.API_KEY
-            },
-            body: JSON.stringify({ users: users })
-        });
-        return response.ok;
-    } catch (error) {
-        console.error('Error saving users:', error);
-        return false;
-    }
+// Сохраняем пользователей в localStorage (кэш)
+function saveUsersToLocal(users) {
+    localStorage.setItem('egelingo_users_cache', JSON.stringify(users));
 }
 
+// Регистрация (сначала в локальный кэш, потом синхронизация)
 async function register(email, password, name) {
     email = email.toLowerCase().trim();
     
-    const users = await getUsersFromCloud();
+    // Проверяем локальный кэш
+    const localUsers = getUsersFromLocal();
     
-    if (users[email]) {
+    if (localUsers[email]) {
         showAuthError('Пользователь с таким email уже существует');
         return false;
     }
@@ -200,27 +188,29 @@ async function register(email, password, name) {
         return false;
     }
     
-    users[email] = {
+    // Создаём пользователя
+    localUsers[email] = {
         password: btoa(password),
         name: name || email.split('@')[0],
         createdAt: new Date().toISOString()
     };
     
-    const saved = await saveUsersToCloud(users);
+    saveUsersToLocal(localUsers);
     
-    if (saved) {
-        return true;
-    } else {
-        showAuthError('Ошибка подключения. Проверьте интернет.');
-        return false;
+    // Пытаемся синхронизировать с облаком
+    if (isOnline) {
+        await syncUsersToCloud();
     }
+    
+    return true;
 }
 
-async function login(email, password) {
+// Вход (проверяем локальный кэш)
+function login(email, password) {
     email = email.toLowerCase().trim();
     
-    const users = await getUsersFromCloud();
-    const user = users[email];
+    const localUsers = getUsersFromLocal();
+    const user = localUsers[email];
     
     if (!user) {
         showAuthError('Пользователь не найден');
@@ -242,28 +232,75 @@ async function login(email, password) {
     return true;
 }
 
-function showAuthError(message) {
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'auth-error';
-    errorDiv.textContent = message;
+// Синхронизация пользователей с облаком
+async function syncUsersToCloud() {
+    if (!isOnline) return false;
     
-    const activeForm = document.querySelector('.auth-form:not([style*="display: none"])');
-    const existingError = activeForm?.querySelector('.auth-error');
-    if (existingError) existingError.remove();
-    if (activeForm) activeForm.appendChild(errorDiv);
+    try {
+        const localUsers = getUsersFromLocal();
+        
+        // Пробуем загрузить из облака
+        const response = await fetch(`${CLOUD_CONFIG.BASE_URL}/${USERS_BIN_ID}/latest`, {
+            headers: { 'X-Master-Key': CLOUD_CONFIG.API_KEY },
+            signal: AbortSignal.timeout(5000)
+        });
+        
+        let cloudUsers = {};
+        if (response.ok) {
+            const data = await response.json();
+            cloudUsers = data.record.users || {};
+        }
+        
+        // Объединяем (локальные приоритетнее)
+        const mergedUsers = { ...cloudUsers, ...localUsers };
+        
+        // Сохраняем в облако
+        await fetch(`${CLOUD_CONFIG.BASE_URL}/${USERS_BIN_ID}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Master-Key': CLOUD_CONFIG.API_KEY
+            },
+            body: JSON.stringify({ users: mergedUsers })
+        });
+        
+        // Обновляем локальный кэш
+        saveUsersToLocal(mergedUsers);
+        
+        return true;
+    } catch (error) {
+        console.log('Cloud sync failed, using local data');
+        return false;
+    }
+}
+
+// Периодическая синхронизация
+async function syncWithCloud() {
+    if (!isOnline || !currentUser) return;
     
-    setTimeout(() => errorDiv.remove(), 3000);
+    updateSyncStatus('syncing', 'Синхронизация...');
+    
+    // Синхронизируем пользователей
+    await syncUsersToCloud();
+    
+    // Синхронизируем прогресс
+    await saveToCloud();
+    await loadFromCloud();
+    
+    updateSyncStatus('success', 'Синхронизировано');
+    setTimeout(() => {
+        if (syncStatus) syncStatus.style.opacity = '0';
+    }, 2000);
 }
 
 // ==================== ОБЛАЧНОЕ ХРАНЕНИЕ ПРОГРЕССА ====================
 async function saveToCloud() {
-    if (!currentUser) return;
+    if (!currentUser || !isOnline) return;
     if (isSyncing) {
         syncQueue.push(saveToCloud);
         return;
     }
     
-    updateSyncStatus('syncing', 'Синхронизация...');
     isSyncing = true;
     
     const progress = {
@@ -290,7 +327,8 @@ async function saveToCloud() {
                     'Content-Type': 'application/json',
                     'X-Master-Key': CLOUD_CONFIG.API_KEY
                 },
-                body: JSON.stringify(progress)
+                body: JSON.stringify(progress),
+                signal: AbortSignal.timeout(5000)
             });
         } else {
             const response = await fetch(CLOUD_CONFIG.BASE_URL, {
@@ -298,24 +336,17 @@ async function saveToCloud() {
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Master-Key': CLOUD_CONFIG.API_KEY,
-                    'X-Bin-Private': 'false',
-                    'X-Bin-Name': `progress_${currentUser.uid.replace(/[^a-zA-Z0-9]/g, '_')}`
+                    'X-Bin-Private': 'false'
                 },
-                body: JSON.stringify(progress)
+                body: JSON.stringify(progress),
+                signal: AbortSignal.timeout(5000)
             });
             const data = await response.json();
             binId = data.metadata.id;
             localStorage.setItem(`egelingo_progress_bin_${currentUser.uid}`, binId);
         }
-        
-        updateSyncStatus('success', 'Синхронизировано');
-        setTimeout(() => {
-            if (syncStatus) syncStatus.style.opacity = '0';
-        }, 2000);
-        
     } catch (error) {
-        console.error('Cloud save error:', error);
-        updateSyncStatus('error', 'Офлайн-режим');
+        console.log('Cloud save error:', error);
     } finally {
         isSyncing = false;
         if (syncQueue.length) {
@@ -325,18 +356,15 @@ async function saveToCloud() {
 }
 
 async function loadFromCloud() {
-    if (!currentUser) return;
-    
-    updateSyncStatus('syncing', 'Загрузка...');
+    if (!currentUser || !isOnline) return;
     
     const binId = localStorage.getItem(`egelingo_progress_bin_${currentUser.uid}`);
     
     if (binId) {
         try {
             const response = await fetch(`${CLOUD_CONFIG.BASE_URL}/${binId}/latest`, {
-                headers: {
-                    'X-Master-Key': CLOUD_CONFIG.API_KEY
-                }
+                headers: { 'X-Master-Key': CLOUD_CONFIG.API_KEY },
+                signal: AbortSignal.timeout(5000)
             });
             
             if (response.ok) {
@@ -354,22 +382,14 @@ async function loadFromCloud() {
                     }
                 });
                 
-                updateSyncStatus('success', 'Загружено из облака');
-            } else {
-                loadLocalData();
+                saveProgress();
+                renderLessons();
+                updateUI();
             }
         } catch (error) {
-            console.error('Cloud load error:', error);
-            loadLocalData();
-            updateSyncStatus('error', 'Офлайн-режим');
+            console.log('Cloud load error:', error);
         }
-    } else {
-        loadLocalData();
     }
-    
-    saveProgress();
-    renderLessons();
-    updateUI();
 }
 
 function loadLocalData() {
@@ -413,7 +433,7 @@ function saveProgress() {
     if (window.cloudSaveTimeout) clearTimeout(window.cloudSaveTimeout);
     window.cloudSaveTimeout = setTimeout(() => {
         saveToCloud();
-    }, 3000);
+    }, 5000);
 }
 
 function updateSyncStatus(status, text) {
@@ -425,6 +445,19 @@ function updateSyncStatus(status, text) {
     const textSpan = syncStatus.querySelector('.sync-text');
     if (textSpan) textSpan.textContent = text;
     syncStatus.style.opacity = '1';
+}
+
+function showAuthError(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'auth-error';
+    errorDiv.textContent = message;
+    
+    const activeForm = document.querySelector('.auth-form:not([style*="display: none"])');
+    const existingError = activeForm?.querySelector('.auth-error');
+    if (existingError) existingError.remove();
+    if (activeForm) activeForm.appendChild(errorDiv);
+    
+    setTimeout(() => errorDiv.remove(), 3000);
 }
 
 // ==================== ОСНОВНАЯ ЛОГИКА ====================
@@ -681,18 +714,9 @@ function closeLessonModal() {
     explanationDiv.style.display = 'none';
 }
 
-function showError(message) {
-    owlTooltip.textContent = message;
-    owlTooltip.style.display = 'block';
-    setTimeout(() => {
-        owlTooltip.style.display = 'none';
-    }, 3000);
-}
-
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('📱 App initializing...');
-    console.log('📀 Using users bin:', USERS_BIN_ID);
     
     authScreen = document.getElementById('authScreen');
     mainApp = document.getElementById('mainApp');
@@ -723,6 +747,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     completeTitle = document.getElementById('completeTitle');
     completeText = document.getElementById('completeText');
     
+    // Отслеживаем онлайн/офлайн
+    window.addEventListener('online', () => {
+        isOnline = true;
+        updateSyncStatus('syncing', 'Восстановление связи...');
+        syncWithCloud();
+    });
+    
+    window.addEventListener('offline', () => {
+        isOnline = false;
+        updateSyncStatus('error', 'Офлайн-режим');
+    });
+    
+    // Периодическая синхронизация каждые 30 секунд
+    setInterval(() => {
+        if (isOnline && currentUser) {
+            syncWithCloud();
+        }
+    }, 30000);
+    
     const tabs = document.querySelectorAll('.auth-tab');
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
@@ -751,10 +794,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
         
-        const success = await login(email, password);
-        if (success) {
-            await loadFromCloud();
+        if (login(email, password)) {
+            loadLocalData();
+            renderLessons();
+            updateUI();
             showMainApp();
+            // Фоновая синхронизация
+            if (isOnline) {
+                await syncWithCloud();
+            }
         }
     });
     
@@ -770,10 +818,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         const success = await register(email, password, name);
         if (success) {
-            const loginSuccess = await login(email, password);
-            if (loginSuccess) {
-                await loadFromCloud();
-                showMainApp();
+            login(email, password);
+            loadLocalData();
+            renderLessons();
+            updateUI();
+            showMainApp();
+            // Фоновая синхронизация
+            if (isOnline) {
+                await syncWithCloud();
             }
         }
     });
@@ -781,8 +833,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const savedUser = localStorage.getItem('egelingo_user');
     if (savedUser) {
         currentUser = JSON.parse(savedUser);
-        await loadFromCloud();
+        loadLocalData();
+        renderLessons();
+        updateUI();
         showMainApp();
+        // Фоновая синхронизация
+        if (isOnline) {
+            await syncWithCloud();
+        }
     }
     
     closeModal.addEventListener('click', closeLessonModal);
@@ -813,15 +871,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }, 2000);
         });
     }
-    
-    window.addEventListener('online', () => {
-        updateSyncStatus('syncing', 'Восстановление связи...');
-        saveToCloud();
-    });
-    
-    window.addEventListener('offline', () => {
-        updateSyncStatus('error', 'Офлайн-режим');
-    });
     
     console.log('✅ App ready');
 });
