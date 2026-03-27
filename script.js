@@ -11,7 +11,6 @@ async function loadTasks() {
                 if (!subjectsBank[subject].tasks[i]) {
                     subjectsBank[subject].tasks[i] = [];
                 }
-                // Минимум 10 заданий для первого задания
                 if (i === 1 && subjectsBank[subject].tasks[i].length < 10) {
                     const defaultTasks = [];
                     for (let j = subjectsBank[subject].tasks[i].length + 1; j <= 10; j++) {
@@ -54,15 +53,14 @@ let currentXP = 0;
 let xpToNextLevel = 100;
 let userLevel = 1;
 let currentSubject = "math";
-let completedTasks = {}; // { subject: { taskId: [completedVariants] } }
+let completedTasks = {};
 let currentTaskId = null;
-let currentTaskVariants = []; // Все варианты текущего задания
+let currentTaskVariants = [];
 let currentVariantIndex = 0;
 let currentVariant = null;
-let currentTaskResults = []; // Массив результатов: { variant, userAnswer, isCorrect }
-let isWaitingForNext = false;
+let currentTaskResults = [];
+let isAnswered = false;
 
-// Статистика пользователя
 let userStats = {
     totalSolved: 0,
     correctAnswers: 0,
@@ -76,10 +74,10 @@ let userStats = {
 
 // DOM элементы
 let authScreen, mainApp, usernameSpan, userAvatar, logoutBtn;
-let tasksGrid, taskCard, closeTaskBtn, taskTitle, taskText, taskAnswer, checkBtn, nextTaskBtn, showMistakesBtn;
+let tasksGrid, taskCard, closeTaskBtn, taskTitle, taskText, taskAnswer, checkBtn, nextBtn;
 let taskFeedback, taskSolution, solutionText, levelBadge, xpFill, xpText, owlTooltip;
 let statsBar, totalTasksSpan, correctPercentSpan, streakSpan;
-let subjectTitle, achievementsGrid;
+let subjectTitle, achievementsGrid, progressSpan;
 
 // ==================== СИСТЕМА УРОВНЕЙ ====================
 function updateLevel() {
@@ -176,7 +174,7 @@ function renderAchievements() {
     });
 }
 
-// ==================== ЗАДАНИЯ (НОВАЯ СИСТЕМА) ====================
+// ==================== ЗАДАНИЯ ====================
 function startTask(taskId) {
     const variants = subjectsBank[currentSubject]?.tasks[taskId];
     if (!variants || variants.length === 0) {
@@ -188,22 +186,28 @@ function startTask(taskId) {
     currentTaskVariants = [...variants];
     currentTaskResults = [];
     currentVariantIndex = 0;
+    isAnswered = false;
     
-    // Перемешиваем варианты
+    // Перемешиваем
     for (let i = currentTaskVariants.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [currentTaskVariants[i], currentTaskVariants[j]] = [currentTaskVariants[j], currentTaskVariants[i]];
     }
     
+    // Показываем кнопки
+    if (nextBtn) nextBtn.style.display = 'none';
+    if (checkBtn) checkBtn.style.display = 'flex';
+    if (checkBtn) checkBtn.disabled = false;
+    
     loadNextVariant();
     
-    taskTitle.textContent = `${subjectsBank[currentSubject].name} - Задание ${taskId} (${currentTaskVariants.length} примеров)`;
+    taskTitle.textContent = `${subjectsBank[currentSubject].name} - Задание ${taskId}`;
     taskCard.style.display = 'block';
     taskCard.scrollIntoView({ behavior: 'smooth' });
     
-    // Прячем кнопку "Показать ошибки" если она была
-    if (showMistakesBtn) showMistakesBtn.style.display = 'none';
-    if (nextTaskBtn) nextTaskBtn.style.display = 'none';
+    // Убираем кнопку "Показать ошибки" если была
+    const oldMistakesBtn = document.getElementById('mistakesBtn');
+    if (oldMistakesBtn) oldMistakesBtn.remove();
 }
 
 function loadNextVariant() {
@@ -213,26 +217,23 @@ function loadNextVariant() {
     }
     
     currentVariant = currentTaskVariants[currentVariantIndex];
+    isAnswered = false;
     
     taskText.textContent = currentVariant.text;
     taskAnswer.value = '';
+    taskAnswer.disabled = false;
     taskFeedback.className = 'task-feedback';
     taskFeedback.style.display = 'none';
     taskFeedback.innerHTML = '';
     taskSolution.style.display = 'none';
-    checkBtn.disabled = false;
-    checkBtn.textContent = 'Проверить';
-    isWaitingForNext = false;
     
-    // Обновляем прогресс
-    const progressSpan = document.getElementById('taskProgress');
-    if (progressSpan) {
-        progressSpan.textContent = `${currentVariantIndex + 1} / ${currentTaskVariants.length}`;
-    }
+    if (checkBtn) checkBtn.disabled = false;
+    if (nextBtn) nextBtn.style.display = 'none';
+    if (progressSpan) progressSpan.textContent = `${currentVariantIndex + 1} / ${currentTaskVariants.length}`;
 }
 
 function checkAnswer() {
-    if (isWaitingForNext) return;
+    if (isAnswered) return;
     if (!currentVariant) return;
     
     const userAnswer = taskAnswer.value.trim();
@@ -256,13 +257,15 @@ function checkAnswer() {
         solutionText.textContent = currentVariant.solution;
         taskSolution.style.display = 'block';
         
-        checkBtn.disabled = true;
-        isWaitingForNext = true;
+        isAnswered = true;
+        taskAnswer.disabled = true;
+        if (checkBtn) checkBtn.disabled = true;
         
-        setTimeout(() => {
-            currentVariantIndex++;
-            loadNextVariant();
-        }, 1500);
+        // Показываем кнопку "Далее"
+        if (nextBtn) {
+            nextBtn.style.display = 'flex';
+            nextBtn.textContent = '➡️ Далее';
+        }
     } else {
         taskFeedback.innerHTML = `❌ Неправильно. Правильный ответ: ${currentVariant.answer}`;
         taskFeedback.className = 'task-feedback wrong';
@@ -273,30 +276,28 @@ function checkAnswer() {
         
         recordAnswer(false);
         
-        // Не переходим к следующему, даём возможность попробовать снова?
-        // По вашему запросу: при неправильном ответе можно продолжить
-        // Но задание не засчитывается. Переходим к следующему по кнопке
+        isAnswered = true;
+        taskAnswer.disabled = true;
+        if (checkBtn) checkBtn.disabled = true;
         
-        checkBtn.disabled = true;
-        checkBtn.textContent = 'Следующий →';
-        isWaitingForNext = true;
-        
-        // Ждём нажатия кнопки "Следующий"
-        const originalHandler = checkBtn.onclick;
-        checkBtn.onclick = () => {
-            currentVariantIndex++;
-            loadNextVariant();
-            checkBtn.onclick = originalHandler;
-            checkBtn.textContent = 'Проверить';
-            checkBtn.disabled = false;
-        };
+        // Показываем кнопку "Далее" (не засчитывая задание)
+        if (nextBtn) {
+            nextBtn.style.display = 'flex';
+            nextBtn.textContent = '➡️ Далее (ошибка)';
+        }
     }
     
     saveProgress();
 }
 
+function nextVariant() {
+    if (!isAnswered) return;
+    
+    currentVariantIndex++;
+    loadNextVariant();
+}
+
 function finishTask() {
-    // Подсчитываем ошибки
     const mistakes = currentTaskResults.filter(r => !r.isCorrect);
     const correctCount = currentTaskResults.filter(r => r.isCorrect).length;
     
@@ -304,41 +305,36 @@ function finishTask() {
     taskFeedback.className = 'task-feedback correct';
     taskFeedback.style.display = 'block';
     
+    if (checkBtn) checkBtn.style.display = 'none';
+    if (nextBtn) nextBtn.style.display = 'none';
+    
     if (mistakes.length > 0) {
         taskFeedback.innerHTML += `<br>❌ Ошибок: ${mistakes.length}`;
         
-        // Создаём кнопку показа ошибок
-        if (!showMistakesBtn) {
-            showMistakesBtn = document.createElement('button');
-            showMistakesBtn.className = 'check-btn';
-            showMistakesBtn.style.marginTop = '15px';
-            showMistakesBtn.style.background = '#f59e0b';
-            taskCard.appendChild(showMistakesBtn);
-        }
-        showMistakesBtn.textContent = '📋 Показать ошибки';
-        showMistakesBtn.style.display = 'block';
-        showMistakesBtn.onclick = () => showMistakes(mistakes);
+        const mistakesBtn = document.createElement('button');
+        mistakesBtn.id = 'mistakesBtn';
+        mistakesBtn.textContent = '📋 Показать ошибки с решениями';
+        mistakesBtn.className = 'check-btn';
+        mistakesBtn.style.marginTop = '15px';
+        mistakesBtn.style.background = '#f59e0b';
+        mistakesBtn.onclick = () => showMistakes(mistakes);
+        taskCard.appendChild(mistakesBtn);
     }
     
-    // Кнопка для следующего задания
-    if (!nextTaskBtn) {
-        nextTaskBtn = document.createElement('button');
-        nextTaskBtn.className = 'check-btn';
-        nextTaskBtn.style.marginTop = '15px';
-        nextTaskBtn.style.marginLeft = '10px';
-        taskCard.appendChild(nextTaskBtn);
-    }
-    nextTaskBtn.textContent = '🏠 Выбрать другое задание';
-    nextTaskBtn.style.display = 'inline-block';
-    nextTaskBtn.onclick = () => {
-        closeTask();
-    };
+    // Кнопка выбора другого задания
+    const chooseBtn = document.createElement('button');
+    chooseBtn.textContent = '🏠 Выбрать другое задание';
+    chooseBtn.className = 'check-btn';
+    chooseBtn.style.marginTop = '15px';
+    chooseBtn.style.marginLeft = '10px';
+    chooseBtn.style.background = '#4a6cf7';
+    chooseBtn.onclick = () => closeTask();
+    taskCard.appendChild(chooseBtn);
     
-    checkBtn.disabled = true;
+    taskAnswer.disabled = true;
 }
 
 function showMistakes(mistakes) {
-    // Создаём модальное окно с ошибками
     const modal = document.createElement('div');
     modal.className = 'mistakes-modal';
     modal.style.cssText = `
@@ -347,7 +343,7 @@ function showMistakes(mistakes) {
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0,0,0,0.8);
+        background: rgba(0,0,0,0.9);
         z-index: 3000;
         display: flex;
         justify-content: center;
@@ -359,60 +355,49 @@ function showMistakes(mistakes) {
     content.style.cssText = `
         background: white;
         border-radius: 30px;
-        max-width: 500px;
+        max-width: 550px;
         width: 90%;
-        max-height: 80vh;
+        max-height: 85vh;
         overflow-y: auto;
-        padding: 20px;
+        padding: 25px;
     `;
     
-    content.innerHTML = '<h3 style="margin-bottom: 15px;">❌ Задания с ошибками</h3>';
+    content.innerHTML = '<h2 style="margin-bottom: 20px; color: #c53030;">❌ Задания с ошибками</h2>';
     
     mistakes.forEach((mistake, idx) => {
         const item = document.createElement('div');
         item.style.cssText = `
-            padding: 12px;
-            margin-bottom: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
             background: #f7fafc;
-            border-radius: 15px;
+            border-radius: 20px;
             border-left: 4px solid #f56565;
         `;
         item.innerHTML = `
-            <p style="font-weight: 600;">${mistake.variant.text}</p>
-            <p style="color: #c53030;">Ваш ответ: ${mistake.userAnswer}</p>
-            <p style="color: #276749;">Правильный ответ: ${mistake.variant.answer}</p>
-            <button class="show-solution-btn" data-solution="${mistake.variant.solution.replace(/"/g, '&quot;')}">📖 Показать решение</button>
+            <p style="font-weight: 700; margin-bottom: 10px;">${mistake.variant.text}</p>
+            <p style="color: #c53030; margin-bottom: 5px;">❌ Ваш ответ: ${mistake.userAnswer}</p>
+            <p style="color: #276749; margin-bottom: 10px;">✅ Правильный ответ: ${mistake.variant.answer}</p>
+            <details style="margin-top: 10px;">
+                <summary style="cursor: pointer; color: #4a6cf7; font-weight: 600;">📖 Показать решение</summary>
+                <p style="margin-top: 10px; padding: 10px; background: #ebf4ff; border-radius: 12px;">${mistake.variant.solution}</p>
+            </details>
         `;
-        
-        const solutionBtn = item.querySelector('.show-solution-btn');
-        solutionBtn.style.cssText = `
-            margin-top: 8px;
-            padding: 6px 12px;
-            background: #4a6cf7;
-            color: white;
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 12px;
-        `;
-        solutionBtn.onclick = () => {
-            alert(`Решение:\n${mistake.variant.solution}`);
-        };
-        
         content.appendChild(item);
     });
     
     const closeBtn = document.createElement('button');
     closeBtn.textContent = 'Закрыть';
     closeBtn.style.cssText = `
-        margin-top: 15px;
-        padding: 10px 20px;
+        margin-top: 20px;
+        padding: 12px 24px;
         background: #4a6cf7;
         color: white;
         border: none;
-        border-radius: 25px;
+        border-radius: 30px;
         cursor: pointer;
         width: 100%;
+        font-size: 16px;
+        font-weight: 600;
     `;
     closeBtn.onclick = () => modal.remove();
     content.appendChild(closeBtn);
@@ -427,9 +412,14 @@ function closeTask() {
     currentTaskVariants = [];
     currentTaskResults = [];
     currentVariant = null;
+    isAnswered = false;
     
-    if (showMistakesBtn) showMistakesBtn.style.display = 'none';
-    if (nextTaskBtn) nextTaskBtn.style.display = 'none';
+    if (checkBtn) checkBtn.style.display = 'flex';
+    if (nextBtn) nextBtn.style.display = 'none';
+    if (progressSpan) progressSpan.textContent = '';
+    
+    const mistakesBtn = document.getElementById('mistakesBtn');
+    if (mistakesBtn) mistakesBtn.remove();
 }
 
 function renderTasks() {
@@ -602,7 +592,7 @@ function showAuthError(msg) {
 
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('📱 EgeLingo v4.0 - Новая система заданий');
+    console.log('📱 EgeLingo v4.1 - Отдельная кнопка "Далее"');
     
     authScreen = document.getElementById('authScreen');
     mainApp = document.getElementById('mainApp');
@@ -630,11 +620,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     subjectTitle = document.getElementById('subjectTitle');
     achievementsGrid = document.getElementById('achievementsGrid');
     
-    // Добавляем индикатор прогресса в задание
-    const progressSpan = document.createElement('div');
+    // Создаём кнопку "Далее"
+    const buttonsDiv = document.querySelector('.task-input-area');
+    if (buttonsDiv && !nextBtn) {
+        nextBtn = document.createElement('button');
+        nextBtn.textContent = '➡️ Далее';
+        nextBtn.className = 'check-btn';
+        nextBtn.style.background = '#48bb78';
+        nextBtn.style.display = 'none';
+        nextBtn.onclick = () => nextVariant();
+        buttonsDiv.appendChild(nextBtn);
+    }
+    
+    // Создаём индикатор прогресса
+    progressSpan = document.createElement('div');
     progressSpan.id = 'taskProgress';
     progressSpan.style.cssText = 'text-align: center; margin-bottom: 15px; font-weight: 600; color: #4a6cf7;';
-    taskCard.insertBefore(progressSpan, taskText);
+    const questionCard = document.querySelector('.question-card');
+    if (questionCard) {
+        questionCard.insertBefore(progressSpan, taskText);
+    }
     
     if (closeTaskBtn) closeTaskBtn.addEventListener('click', closeTask);
     if (checkBtn) checkBtn.addEventListener('click', checkAnswer);
