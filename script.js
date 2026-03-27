@@ -1,26 +1,23 @@
 // ==================== КОНФИГУРАЦИЯ ====================
-const GOOGLE_CLIENT_ID = '549758991862-888ndj9ubsjl5u8r04i804gh05d0mbbv.apps.googleusercontent.com';
-
-// JSONBin.io конфигурация
 const CLOUD_CONFIG = {
     API_KEY: '$2a$10$Vxl9lZUaGmUANs2JQBixL.O37Ot8zteKKSAR98p.eP6.aTeQ4Brwu',
     BASE_URL: 'https://api.jsonbin.io/v3/b'
 };
 
-// Банк заданий с сайта «Решу ЕГЭ»
+// Банк заданий (остаётся без изменений)
 const questionBank = {
     orthoepy: [
         {
             text: "В каком слове ударение падает на первый слог?",
             answers: ["красивЕе", "тортЫ", "бАнты", "звонИт"],
             correct: 2,
-            explanation: "В слове «бАнты» ударение падает на первый слог. Запомните: бАнты, шАрфы, тОрты."
+            explanation: "В слове «бАнты» ударение падает на первый слог."
         },
         {
             text: "В каком слове ударение падает на последний слог?",
             answers: ["клАла", "создалА", "нАчал", "понЯв"],
             correct: 1,
-            explanation: "В глаголах женского рода прошедшего времени ударение падает на окончание: создалА, взялА, спалА."
+            explanation: "В глаголах женского рода ударение падает на окончание."
         },
         {
             text: "В каком слове ударение падает на второй слог?",
@@ -50,7 +47,7 @@ const questionBank = {
                 "ВЕЧНАЯ мерзлота встречается в Сибири."
             ],
             correct: 0,
-            explanation: "ВЕКОВЕЧНЫЙ — очень старый (о лесе), ВЕЧНЫЙ — бесконечный во времени."
+            explanation: "ВЕКОВЕЧНЫЙ — очень старый (о лесе)."
         }
     ],
     grammar: [
@@ -63,7 +60,7 @@ const questionBank = {
                 "более КРАСИВЫЙ"
             ],
             correct: 2,
-            explanation: "Правильно: ИХ портфель. Слово «ихний» является просторечным."
+            explanation: "Правильно: ИХ портфель."
         },
         {
             text: "Укажите пример с ошибкой в образовании формы слова",
@@ -74,7 +71,7 @@ const questionBank = {
                 "ПОЕЗЖАЙ в город"
             ],
             correct: 1,
-            explanation: "Правильно: ПОЕЗЖАЙ. Глагола «едь» в русском языке нет."
+            explanation: "Правильно: ПОЕЗЖАЙ."
         }
     ],
     roots: [
@@ -87,7 +84,7 @@ const questionBank = {
                 "пл...вец, выр...щенный, р...внина"
             ],
             correct: 2,
-            explanation: "Пастух (пас), казалось (кажется), удивление (диво) — проверяемые гласные."
+            explanation: "Пастух (пас), казалось (кажется), удивление (диво)."
         },
         {
             text: "В каком ряду во всех словах пропущена чередующаяся гласная корня?",
@@ -155,82 +152,85 @@ let reviveModal, reviveBtn, reviveTimerText;
 let completeModal, continueBtn, completeTitle, completeText;
 let authScreen, mainApp, usernameSpan, userAvatar, logoutBtn, syncStatus;
 
-// ==================== GOOGLE AUTH ====================
-// Функция обратного вызова после успешного входа
-window.handleCredentialResponse = async (response) => {
-    try {
-        console.log('✅ Google response received');
-        
-        // Декодируем JWT токен
-        const payload = parseJwt(response.credential);
-        
-        currentUser = {
-            uid: payload.sub,
-            name: payload.name,
-            email: payload.email,
-            picture: payload.picture
-        };
-        
-        console.log('✅ User logged in:', currentUser.name);
-        
-        // Сохраняем локально
-        localStorage.setItem('egelingo_user', JSON.stringify(currentUser));
-        
-        // Загружаем данные из облака
-        await loadFromCloud();
-        
-        showMainApp();
-    } catch (error) {
-        console.error('❌ Login error:', error);
-        showError('Ошибка входа. Попробуйте ещё раз.');
-    }
-};
+// ==================== АВТОРИЗАЦИЯ ====================
+// Хранилище пользователей (в localStorage + облако)
+const usersDB = {};
 
-// Парсинг JWT токена
-function parseJwt(token) {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-    return JSON.parse(jsonPayload);
+// Загрузка пользователей из localStorage
+function loadUsers() {
+    const saved = localStorage.getItem('egelingo_users');
+    if (saved) {
+        const users = JSON.parse(saved);
+        Object.assign(usersDB, users);
+    }
 }
 
-// Инициализация Google кнопки
-function initGoogleButton() {
-    if (!window.google || !window.google.accounts) {
-        console.log('⏳ Google API not ready, retrying in 500ms...');
-        setTimeout(initGoogleButton, 500);
-        return;
+// Сохранение пользователей
+function saveUsers() {
+    localStorage.setItem('egelingo_users', JSON.stringify(usersDB));
+}
+
+// Регистрация
+function register(email, password, name) {
+    email = email.toLowerCase().trim();
+    
+    if (usersDB[email]) {
+        showAuthError('Пользователь с таким email уже существует');
+        return false;
     }
     
-    console.log('✅ Google API ready, initializing...');
-    
-    window.google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: window.handleCredentialResponse,
-        auto_select: false,
-        cancel_on_tap_outside: true
-    });
-    
-    const buttonContainer = document.getElementById('googleSignInButton');
-    if (buttonContainer) {
-        window.google.accounts.id.renderButton(
-            buttonContainer,
-            {
-                type: 'standard',
-                theme: 'outline',
-                size: 'large',
-                text: 'signin_with',
-                shape: 'rectangular',
-                logo_alignment: 'left',
-                width: 280
-            }
-        );
-        console.log('✅ Google button rendered');
-    } else {
-        console.error('❌ Button container not found');
+    if (password.length < 6) {
+        showAuthError('Пароль должен быть не менее 6 символов');
+        return false;
     }
+    
+    usersDB[email] = {
+        password: btoa(password), // простое кодирование (не для продакшена)
+        name: name || email.split('@')[0],
+        createdAt: new Date().toISOString()
+    };
+    
+    saveUsers();
+    return true;
+}
+
+// Вход
+function login(email, password) {
+    email = email.toLowerCase().trim();
+    const user = usersDB[email];
+    
+    if (!user) {
+        showAuthError('Пользователь не найден');
+        return false;
+    }
+    
+    if (user.password !== btoa(password)) {
+        showAuthError('Неверный пароль');
+        return false;
+    }
+    
+    currentUser = {
+        uid: email,
+        name: user.name,
+        email: email
+    };
+    
+    localStorage.setItem('egelingo_user', JSON.stringify(currentUser));
+    return true;
+}
+
+function showAuthError(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'auth-error';
+    errorDiv.textContent = message;
+    errorDiv.style.cssText = 'color: #e53e3e; font-size: 14px; margin-top: 10px; text-align: center;';
+    
+    const activeForm = document.querySelector('.auth-form:not([style*="display: none"])');
+    const existingError = activeForm?.querySelector('.auth-error');
+    if (existingError) existingError.remove();
+    if (activeForm) activeForm.appendChild(errorDiv);
+    
+    setTimeout(() => errorDiv.remove(), 3000);
 }
 
 // ==================== ОБЛАЧНОЕ ХРАНЕНИЕ ====================
@@ -248,7 +248,6 @@ async function saveToCloud() {
         userId: currentUser.uid,
         email: currentUser.email,
         name: currentUser.name,
-        picture: currentUser.picture,
         lastSync: new Date().toISOString(),
         xp: currentXP,
         lives: lives,
@@ -291,12 +290,9 @@ async function saveToCloud() {
             if (syncStatus) syncStatus.style.opacity = '0';
         }, 2000);
         
-        localStorage.removeItem(`egelingo_offline_${currentUser.uid}`);
-        
     } catch (error) {
         console.error('Cloud save error:', error);
         updateSyncStatus('error', 'Офлайн-режим');
-        localStorage.setItem(`egelingo_offline_${currentUser.uid}`, JSON.stringify(progress));
     } finally {
         isSyncing = false;
         if (syncQueue.length) {
@@ -336,7 +332,6 @@ async function loadFromCloud() {
                 });
                 
                 updateSyncStatus('success', 'Загружено из облака');
-                console.log('✅ Cloud data loaded');
             } else {
                 loadLocalData();
             }
@@ -346,22 +341,7 @@ async function loadFromCloud() {
             updateSyncStatus('error', 'Офлайн-режим');
         }
     } else {
-        const offlineData = localStorage.getItem(`egelingo_offline_${currentUser.uid}`);
-        if (offlineData) {
-            const progress = JSON.parse(offlineData);
-            currentXP = progress.xp || 0;
-            lives = progress.lives !== undefined ? progress.lives : 3;
-            progress.lessons?.forEach(savedLesson => {
-                const lesson = lessons.find(l => l.id === savedLesson.id);
-                if (lesson) {
-                    lesson.completed = savedLesson.completed;
-                    lesson.unlocked = savedLesson.unlocked;
-                }
-            });
-            updateSyncStatus('success', 'Загружено из кэша');
-        } else {
-            loadLocalData();
-        }
+        loadLocalData();
     }
     
     saveProgress();
@@ -383,7 +363,6 @@ function loadLocalData() {
                 lesson.unlocked = savedLesson.unlocked;
             }
         });
-        console.log('✅ Local data loaded');
     } else {
         currentXP = 0;
         lives = 3;
@@ -391,7 +370,6 @@ function loadLocalData() {
             lesson.completed = false;
             lesson.unlocked = idx === 0;
         });
-        console.log('✅ Fresh start');
     }
 }
 
@@ -431,13 +409,6 @@ function showMainApp() {
     if (authScreen) authScreen.style.display = 'none';
     if (mainApp) mainApp.style.display = 'block';
     if (usernameSpan) usernameSpan.textContent = currentUser?.name || 'Ученик';
-    if (userAvatar) {
-        if (currentUser?.picture) {
-            userAvatar.innerHTML = `<img src="${currentUser.picture}" alt="avatar">`;
-        } else {
-            userAvatar.textContent = '👤';
-        }
-    }
     
     renderLessons();
     updateUI();
@@ -446,14 +417,9 @@ function showMainApp() {
 function handleLogout() {
     if (confirm('Вы уверены, что хотите выйти?')) {
         localStorage.removeItem('egelingo_user');
-        localStorage.removeItem(`egelingo_progress_${currentUser?.uid}`);
         currentUser = null;
         if (authScreen) authScreen.style.display = 'flex';
         if (mainApp) mainApp.style.display = 'none';
-        
-        if (window.google?.accounts?.id) {
-            window.google.accounts.id.disableAutoSelect();
-        }
     }
 }
 
@@ -702,7 +668,7 @@ function showError(message) {
 
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('📱 DOM loaded, initializing app...');
+    console.log('📱 App initializing...');
     
     // Получаем элементы
     authScreen = document.getElementById('authScreen');
@@ -734,14 +700,69 @@ document.addEventListener('DOMContentLoaded', () => {
     completeTitle = document.getElementById('completeTitle');
     completeText = document.getElementById('completeText');
     
-    // Инициализируем Google кнопку
-    initGoogleButton();
+    // Загружаем пользователей
+    loadUsers();
+    
+    // Переключение между вкладками
+    const tabs = document.querySelectorAll('.auth-tab');
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
+            if (tab.dataset.tab === 'login') {
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+            } else {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+            }
+        });
+    });
+    
+    // Кнопка входа
+    document.getElementById('loginBtn').addEventListener('click', () => {
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        
+        if (!email || !password) {
+            showAuthError('Заполните все поля');
+            return;
+        }
+        
+        if (login(email, password)) {
+            loadFromCloud().then(() => {
+                showMainApp();
+            });
+        }
+    });
+    
+    // Кнопка регистрации
+    document.getElementById('registerBtn').addEventListener('click', () => {
+        const name = document.getElementById('registerName').value;
+        const email = document.getElementById('registerEmail').value;
+        const password = document.getElementById('registerPassword').value;
+        
+        if (!email || !password) {
+            showAuthError('Заполните все поля');
+            return;
+        }
+        
+        if (register(email, password, name)) {
+            login(email, password);
+            loadFromCloud().then(() => {
+                showMainApp();
+            });
+        }
+    });
     
     // Проверяем сохранённую сессию
     const savedUser = localStorage.getItem('egelingo_user');
     if (savedUser) {
         currentUser = JSON.parse(savedUser);
-        console.log('📀 Found saved user:', currentUser.name);
         loadFromCloud().then(() => {
             showMainApp();
         }).catch(() => {
@@ -791,12 +812,11 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSyncStatus('error', 'Офлайн-режим');
     });
     
-    console.log('✅ App initialization complete');
+    console.log('✅ App ready');
 });
 
-// PWA регистрация
+// Service Worker (опционально, если есть sw.js)
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js')
-        .then(reg => console.log('✅ SW registered'))
-        .catch(err => console.log('❌ SW error:', err));
+    navigator.serviceWorker.register('/EGE/sw.js')
+        .catch(err => console.log('SW not available'));
 }
