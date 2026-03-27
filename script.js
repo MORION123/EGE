@@ -1,35 +1,42 @@
-// Банк заданий с сайта «Решу ЕГЭ» (реальные задания по русскому языку)
+// ==================== КОНФИГУРАЦИЯ ====================
+// Для хранения данных используем JSONBin.io (бесплатный сервис)
+// Зарегистрируйтесь на https://jsonbin.io и получите API ключ
+const CLOUD_CONFIG = {
+    // Получите ключ на https://jsonbin.io/v3/signup
+    API_KEY: '$2a$10$YOUR_API_KEY_HERE',  // Замените на свой API ключ
+    BIN_ID: null, // Будет создан автоматически для каждого пользователя
+    BASE_URL: 'https://api.jsonbin.io/v3/b'
+};
+
+// Банк заданий с сайта «Решу ЕГЭ»
 const questionBank = {
-    // Орфоэпия (ударения)
     orthoepy: [
         {
             text: "В каком слове ударение падает на первый слог?",
             answers: ["красивЕе", "тортЫ", "бАнты", "звонИт"],
             correct: 2,
-            explanation: "В слове «бАнты» ударение падает на первый слог. Запомните: банты, шарфы, торты — ударение на первый слог."
+            explanation: "В слове «бАнты» ударение падает на первый слог."
         },
         {
             text: "В каком слове ударение падает на последний слог?",
             answers: ["клАла", "создалА", "нАчал", "понЯв"],
             correct: 1,
-            explanation: "В глаголах женского рода прошедшего времени ударение часто падает на окончание: создалА, взялА, спалА."
+            explanation: "В глаголах женского рода прошедшего времени ударение падает на окончание."
         }
     ],
-    // Паронимы
     paronyms: [
         {
             text: "В каком предложении вместо слова ДЛИННЫЙ нужно употребить ДЛИТЕЛЬНЫЙ?",
             answers: [
-                "ДЛИННЫЙ хвост павлина переливался всеми цветами радуги.",
-                "Нам предстоял ДЛИННЫЙ путь через пустыню.",
+                "ДЛИННЫЙ хвост павлина переливался.",
+                "Нам предстоял ДЛИННЫЙ путь.",
                 "После ДЛИННОГО совещания все разошлись.",
-                "ДЛИННЫЙ свисток паровоза разбудил всю округу."
+                "ДЛИННЫЙ свисток разбудил округу."
             ],
             correct: 2,
-            explanation: "ДЛИТЕЛЬНЫЙ — о времени, ДЛИННЫЙ — о размере. Правильно: после ДЛИТЕЛЬНОГО совещания."
+            explanation: "ДЛИТЕЛЬНЫЙ — о времени, ДЛИННЫЙ — о размере."
         }
     ],
-    // Грамматические нормы
     grammar: [
         {
             text: "Укажите пример с ошибкой в образовании формы слова",
@@ -40,35 +47,33 @@ const questionBank = {
                 "более КРАСИВЫЙ"
             ],
             correct: 2,
-            explanation: "Правильно: ИХ портфель. Слово «ихний» является просторечным."
+            explanation: "Правильно: ИХ портфель."
         }
     ],
-    // Правописание корней
     roots: [
         {
             text: "В каком ряду во всех словах пропущена безударная проверяемая гласная корня?",
             answers: [
-                "ст...рожил (дом), ум...лчать, р...сток",
+                "ст...рожил, ум...лчать, р...сток",
                 "зар...сли, пок...сившийся, оп...здание",
                 "п...стух, к...залось, уд...вление",
                 "пл...вец, выр...щенный, р...внина"
             ],
             correct: 2,
-            explanation: "Пастух (пас), казалось (кажется), удивление (диво) — проверяемые гласные."
+            explanation: "Пастух (пас), казалось (кажется), удивление (диво)."
         }
     ],
-    // Пунктуация
     punctuation: [
         {
-            text: "В каком варианте ответа правильно указаны все цифры, на месте которых в предложении должны стоять запятые? «Солнце (1) выглянувшее из-за туч (2) осветило лес (3) и (4) заиграло на траве.»",
+            text: "В каком варианте ответа правильно указаны все цифры, на месте которых нужны запятые? «Солнце (1) выглянувшее из-за туч (2) осветило лес (3) и (4) заиграло.»",
             answers: ["1,2", "1,2,3", "1,2,3,4", "2,3,4"],
             correct: 0,
-            explanation: "Причастный оборот «выглянувшее из-за туч» выделяется запятыми (1 и 2). Запятая перед «и» не нужна, так как нет повторяющегося союза."
+            explanation: "Причастный оборот выделяется запятыми (1 и 2)."
         }
     ]
 };
 
-// Объединяем все задания в один массив для уроков
+// Объединяем задания
 const allQuestions = [
     ...questionBank.orthoepy,
     ...questionBank.paronyms,
@@ -77,7 +82,7 @@ const allQuestions = [
     ...questionBank.punctuation
 ];
 
-// Данные уроков (темы ЕГЭ по русскому языку)
+// Данные уроков
 const lessons = [
     { id: 0, title: "Орфоэпия (ударения)", completed: false, unlocked: true, questionIndices: [0, 1] },
     { id: 1, title: "Паронимы", completed: false, unlocked: false, questionIndices: [2] },
@@ -95,6 +100,8 @@ let currentQuestionIndex = 0;
 let waitingForNext = false;
 let reviveTimeout = null;
 let reviveCountdown = null;
+let isSyncing = false;
+let syncQueue = [];
 
 // DOM элементы
 let lessonsPath, xpFill, xpText, livesContainer, owlTooltip;
@@ -102,9 +109,231 @@ let lessonModal, closeModal, lessonTitle, currentQuestionNum, totalQuestions;
 let questionText, answersGrid, explanationDiv, explanationText;
 let reviveModal, reviveBtn, reviveTimerText;
 let completeModal, continueBtn, completeTitle, completeText;
-let authScreen, mainApp, usernameSpan, userAvatar, logoutBtn, googleLoginBtn;
+let authScreen, mainApp, usernameSpan, userAvatar, logoutBtn, syncStatus;
 
-// Инициализация после загрузки DOM
+// ==================== GOOGLE AUTH ====================
+// Функция обратного вызова после успешного входа
+window.handleGoogleLogin = async (response) => {
+    try {
+        // Декодируем JWT токен
+        const payload = parseJwt(response.credential);
+        
+        currentUser = {
+            uid: payload.sub,
+            name: payload.name,
+            email: payload.email,
+            picture: payload.picture,
+            token: response.credential
+        };
+        
+        // Сохраняем локально
+        localStorage.setItem('egelingo_user', JSON.stringify(currentUser));
+        
+        // Загружаем данные из облака
+        await loadFromCloud();
+        
+        showMainApp();
+    } catch (error) {
+        console.error('Login error:', error);
+        showError('Ошибка входа. Попробуйте ещё раз.');
+    }
+};
+
+// Парсинг JWT токена
+function parseJwt(token) {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+}
+
+// ==================== ОБЛАЧНОЕ ХРАНЕНИЕ (JSONBin.io) ====================
+// Сохранить прогресс в облако
+async function saveToCloud() {
+    if (!currentUser) return;
+    if (isSyncing) {
+        syncQueue.push(saveToCloud);
+        return;
+    }
+    
+    updateSyncStatus('syncing', 'Синхронизация...');
+    isSyncing = true;
+    
+    const progress = {
+        userId: currentUser.uid,
+        email: currentUser.email,
+        lastSync: new Date().toISOString(),
+        xp: currentXP,
+        lives: lives,
+        lessons: lessons.map(l => ({
+            id: l.id,
+            completed: l.completed,
+            unlocked: l.unlocked
+        }))
+    };
+    
+    try {
+        // Получаем или создаём bin для пользователя
+        let binId = localStorage.getItem(`egelingo_bin_${currentUser.uid}`);
+        
+        if (binId) {
+            // Обновляем существующий bin
+            await fetch(`${CLOUD_CONFIG.BASE_URL}/${binId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': CLOUD_CONFIG.API_KEY
+                },
+                body: JSON.stringify(progress)
+            });
+        } else {
+            // Создаём новый bin
+            const response = await fetch(CLOUD_CONFIG.BASE_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': CLOUD_CONFIG.API_KEY,
+                    'X-Bin-Private': 'false'
+                },
+                body: JSON.stringify(progress)
+            });
+            const data = await response.json();
+            binId = data.metadata.id;
+            localStorage.setItem(`egelingo_bin_${currentUser.uid}`, binId);
+        }
+        
+        updateSyncStatus('success', 'Синхронизировано');
+        setTimeout(() => {
+            if (syncStatus) syncStatus.style.opacity = '0';
+        }, 2000);
+    } catch (error) {
+        console.error('Cloud save error:', error);
+        updateSyncStatus('error', 'Офлайн-режим');
+        // Сохраняем в очередь для повторной синхронизации
+        localStorage.setItem(`egelingo_offline_${currentUser.uid}`, JSON.stringify(progress));
+    } finally {
+        isSyncing = false;
+        if (syncQueue.length) {
+            const next = syncQueue.shift();
+            next();
+        }
+    }
+}
+
+// Загрузить прогресс из облака
+async function loadFromCloud() {
+    if (!currentUser) return;
+    
+    updateSyncStatus('syncing', 'Загрузка...');
+    
+    const binId = localStorage.getItem(`egelingo_bin_${currentUser.uid}`);
+    
+    if (binId) {
+        try {
+            const response = await fetch(`${CLOUD_CONFIG.BASE_URL}/${binId}/latest`, {
+                headers: {
+                    'X-Master-Key': CLOUD_CONFIG.API_KEY
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const progress = data.record;
+                
+                currentXP = progress.xp || 0;
+                lives = progress.lives !== undefined ? progress.lives : 3;
+                
+                progress.lessons?.forEach(savedLesson => {
+                    const lesson = lessons.find(l => l.id === savedLesson.id);
+                    if (lesson) {
+                        lesson.completed = savedLesson.completed;
+                        lesson.unlocked = savedLesson.unlocked;
+                    }
+                });
+                
+                updateSyncStatus('success', 'Загружено');
+            } else {
+                // Bin не найден, используем локальные данные
+                loadLocalData();
+            }
+        } catch (error) {
+            console.error('Cloud load error:', error);
+            loadLocalData();
+            updateSyncStatus('error', 'Офлайн-режим');
+        }
+    } else {
+        loadLocalData();
+    }
+    
+    saveProgress();
+    renderLessons();
+    updateUI();
+}
+
+// Загрузка локальных данных (офлайн)
+function loadLocalData() {
+    const saved = localStorage.getItem(`egelingo_progress_${currentUser.uid}`);
+    if (saved) {
+        const progress = JSON.parse(saved);
+        currentXP = progress.xp || 0;
+        lives = progress.lives !== undefined ? progress.lives : 3;
+        
+        progress.lessons?.forEach(savedLesson => {
+            const lesson = lessons.find(l => l.id === savedLesson.id);
+            if (lesson) {
+                lesson.completed = savedLesson.completed;
+                lesson.unlocked = savedLesson.unlocked;
+            }
+        });
+    } else {
+        currentXP = 0;
+        lives = 3;
+        lessons.forEach((lesson, idx) => {
+            lesson.completed = false;
+            lesson.unlocked = idx === 0;
+        });
+    }
+}
+
+// Обновить статус синхронизации
+function updateSyncStatus(status, text) {
+    if (!syncStatus) return;
+    syncStatus.className = 'sync-status';
+    if (status === 'syncing') syncStatus.classList.add('syncing');
+    if (status === 'error') syncStatus.classList.add('error');
+    
+    const textSpan = syncStatus.querySelector('.sync-text');
+    if (textSpan) textSpan.textContent = text;
+    
+    syncStatus.style.opacity = '1';
+}
+
+// ==================== ЛОКАЛЬНОЕ СОХРАНЕНИЕ ====================
+function saveProgress() {
+    if (!currentUser) return;
+    
+    const progress = {
+        xp: currentXP,
+        lives: lives,
+        lessons: lessons.map(lesson => ({
+            id: lesson.id,
+            completed: lesson.completed,
+            unlocked: lesson.unlocked
+        }))
+    };
+    localStorage.setItem(`egelingo_progress_${currentUser.uid}`, JSON.stringify(progress));
+    
+    // Отправляем в облако (с задержкой, чтобы не спамить)
+    if (window.cloudSaveTimeout) clearTimeout(window.cloudSaveTimeout);
+    window.cloudSaveTimeout = setTimeout(() => {
+        saveToCloud();
+    }, 2000);
+}
+
+// ==================== ОСТАЛЬНОЙ КОД (аналогично предыдущей версии) ====================
+// Инициализация
 document.addEventListener('DOMContentLoaded', () => {
     // Получаем элементы
     authScreen = document.getElementById('authScreen');
@@ -112,7 +341,7 @@ document.addEventListener('DOMContentLoaded', () => {
     usernameSpan = document.getElementById('username');
     userAvatar = document.getElementById('userAvatar');
     logoutBtn = document.getElementById('logoutBtn');
-    googleLoginBtn = document.getElementById('googleLoginBtn');
+    syncStatus = document.getElementById('syncStatus');
     
     lessonsPath = document.getElementById('lessonsPath');
     xpFill = document.getElementById('xpFill');
@@ -136,8 +365,14 @@ document.addEventListener('DOMContentLoaded', () => {
     completeTitle = document.getElementById('completeTitle');
     completeText = document.getElementById('completeText');
     
-    // Настройка Firebase Auth
-    setupAuth();
+    // Проверяем сохранённую сессию
+    const savedUser = localStorage.getItem('egelingo_user');
+    if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        loadFromCloud().then(() => {
+            showMainApp();
+        });
+    }
     
     // События
     closeModal.addEventListener('click', closeLessonModal);
@@ -146,9 +381,7 @@ document.addEventListener('DOMContentLoaded', () => {
         completeModal.classList.remove('active');
     });
     logoutBtn.addEventListener('click', handleLogout);
-    googleLoginBtn.addEventListener('click', handleGoogleLogin);
     
-    // Закрытие модалок по клику вне
     window.addEventListener('click', (e) => {
         if (e.target === lessonModal) closeLessonModal();
         if (e.target === reviveModal) reviveModal.classList.remove('active');
@@ -157,9 +390,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Подсказка совы
     document.getElementById('owlAvatar').addEventListener('click', () => {
-        if (lessons[0].unlocked && !lessons[0].completed) {
+        if (lessons[0]?.unlocked && !lessons[0]?.completed) {
             owlTooltip.textContent = 'Нажми на первый урок, чтобы начать!';
-        } else if (lessons[0].completed) {
+        } else if (lessons[0]?.completed) {
             owlTooltip.textContent = 'Отлично! Продолжай в том же духе! 🎯';
         } else {
             owlTooltip.textContent = 'Начни с первого урока!';
@@ -168,152 +401,46 @@ document.addEventListener('DOMContentLoaded', () => {
             owlTooltip.style.display = 'none';
         }, 2000);
     });
+    
+    // Обработка онлайн/офлайн
+    window.addEventListener('online', () => {
+        updateSyncStatus('syncing', 'Восстановление связи...');
+        saveToCloud();
+    });
+    
+    window.addEventListener('offline', () => {
+        updateSyncStatus('error', 'Офлайн-режим');
+    });
 });
 
-// Настройка авторизации
-function setupAuth() {
-    const auth = window.firebaseAuth;
-    const onAuthStateChanged = window.onAuthStateChanged;
-    
-    if (auth && onAuthStateChanged) {
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUser = {
-                    uid: user.uid,
-                    name: user.displayName || user.email.split('@')[0],
-                    email: user.email,
-                    photoURL: user.photoURL
-                };
-                loadUserData();
-                showMainApp();
-            } else {
-                showAuthScreen();
-            }
-        });
-    } else {
-        // Fallback: используем localStorage для демо
-        const savedUser = localStorage.getItem('egelingo_demo_user');
-        if (savedUser) {
-            currentUser = JSON.parse(savedUser);
-            loadUserData();
-            showMainApp();
-        } else {
-            showAuthScreen();
-        }
-    }
-}
-
-// Вход через Google
-async function handleGoogleLogin() {
-    const auth = window.firebaseAuth;
-    const provider = new window.GoogleAuthProvider();
-    
-    if (auth && window.signInWithPopup) {
-        try {
-            const result = await window.signInWithPopup(auth, provider);
-            currentUser = {
-                uid: result.user.uid,
-                name: result.user.displayName,
-                email: result.user.email,
-                photoURL: result.user.photoURL
-            };
-            loadUserData();
-            showMainApp();
-        } catch (error) {
-            console.error('Google login error:', error);
-            // Fallback для демо
-            demoLogin();
-        }
-    } else {
-        demoLogin();
-    }
-}
-
-// Демо-вход (без Firebase)
-function demoLogin() {
-    const demoName = prompt('Введите ваше имя (для демо-режима):', 'Ученик');
-    currentUser = {
-        uid: 'demo_' + Date.now(),
-        name: demoName || 'Ученик',
-        email: 'demo@egelingo.ru',
-        photoURL: null
-    };
-    localStorage.setItem('egelingo_demo_user', JSON.stringify(currentUser));
-    loadUserData();
-    showMainApp();
-}
-
-// Выход
-async function handleLogout() {
-    const auth = window.firebaseAuth;
-    if (auth && window.signOut) {
-        await window.signOut(auth);
-    }
-    localStorage.removeItem('egelingo_demo_user');
-    localStorage.removeItem('egelingo_progress');
-    currentUser = null;
-    showAuthScreen();
-}
-
-// Показать экран авторизации
-function showAuthScreen() {
-    if (authScreen) authScreen.style.display = 'flex';
-    if (mainApp) mainApp.style.display = 'none';
-}
-
-// Показать основное приложение
 function showMainApp() {
     if (authScreen) authScreen.style.display = 'none';
     if (mainApp) mainApp.style.display = 'block';
     if (usernameSpan) usernameSpan.textContent = currentUser?.name || 'Ученик';
-    if (userAvatar) userAvatar.textContent = currentUser?.photoURL ? '📸' : '👤';
+    if (userAvatar) userAvatar.innerHTML = currentUser?.picture ? 
+        `<img src="${currentUser.picture}" style="width: 32px; height: 32px; border-radius: 50%;">` : '👤';
     
     renderLessons();
     updateUI();
 }
 
-// Загрузить данные пользователя
-function loadUserData() {
-    const saved = localStorage.getItem(`egelingo_progress_${currentUser.uid}`);
-    if (saved) {
-        const progress = JSON.parse(saved);
-        currentXP = progress.xp || 0;
-        lives = progress.lives !== undefined ? progress.lives : 3;
-        
-        progress.lessons?.forEach(savedLesson => {
-            const lesson = lessons.find(l => l.id === savedLesson.id);
-            if (lesson) {
-                lesson.completed = savedLesson.completed;
-                lesson.unlocked = savedLesson.unlocked;
-            }
-        });
-    } else {
-        currentXP = 0;
-        lives = 3;
-        lessons.forEach((lesson, idx) => {
-            lesson.completed = false;
-            lesson.unlocked = idx === 0;
-        });
+function handleLogout() {
+    localStorage.removeItem('egelingo_user');
+    localStorage.removeItem(`egelingo_progress_${currentUser?.uid}`);
+    currentUser = null;
+    if (authScreen) authScreen.style.display = 'flex';
+    if (mainApp) mainApp.style.display = 'none';
+    
+    // Очищаем Google сессию
+    if (window.google?.accounts?.id) {
+        window.google.accounts.id.disableAutoSelect();
     }
-    saveProgress();
 }
 
-// Сохранить прогресс
-function saveProgress() {
-    if (!currentUser) return;
-    const progress = {
-        xp: currentXP,
-        lives: lives,
-        lessons: lessons.map(lesson => ({
-            id: lesson.id,
-            completed: lesson.completed,
-            unlocked: lesson.unlocked
-        }))
-    };
-    localStorage.setItem(`egelingo_progress_${currentUser.uid}`, JSON.stringify(progress));
-}
+// Остальные функции (renderLessons, startLesson, loadQuestion, checkAnswer и т.д.)
+// остаются такими же, как в предыдущей версии, только в saveProgress добавляем вызов saveToCloud()
+// и в updateUI, completeLesson тоже вызываем saveProgress()
 
-// Рендер дорожки уроков
 function renderLessons() {
     if (!lessonsPath) return;
     lessonsPath.innerHTML = '';
@@ -324,14 +451,12 @@ function renderLessons() {
         if (!lesson.unlocked) lessonDiv.classList.add('locked');
         if (lesson.unlocked && !lesson.completed) lessonDiv.classList.add('active');
         
-        const questionCount = lesson.questionIndices.length;
-        
         lessonDiv.innerHTML = `
             <div class="lesson-number">${index + 1}</div>
             <div class="lesson-info">
                 <div class="lesson-title">${lesson.title}</div>
                 <div class="lesson-status ${lesson.completed ? 'completed' : ''}">
-                    ${lesson.completed ? '✅ Пройдено' : (lesson.unlocked ? `🔓 ${questionCount} заданий` : '🔒 Заблокировано')}
+                    ${lesson.completed ? '✅ Пройдено' : (lesson.unlocked ? `🔓 ${lesson.questionIndices.length} заданий` : '🔒 Заблокировано')}
                 </div>
             </div>
         `;
@@ -344,7 +469,6 @@ function renderLessons() {
     });
 }
 
-// Начать урок
 function startLesson(lessonId) {
     if (waitingForNext) return;
     if (lives <= 0) {
@@ -362,7 +486,6 @@ function startLesson(lessonId) {
     loadQuestion();
 }
 
-// Загрузить вопрос
 function loadQuestion() {
     const lesson = lessons[currentLesson];
     const questionIdx = lesson.questionIndices[currentQuestionIndex];
@@ -384,13 +507,11 @@ function loadQuestion() {
     });
 }
 
-// Проверить ответ
 function checkAnswer(selectedIndex, buttonElement, question) {
     if (waitingForNext) return;
     
     const isCorrect = selectedIndex === question.correct;
     
-    // Блокируем кнопки
     document.querySelectorAll('.answer-btn').forEach(btn => {
         btn.disabled = true;
     });
@@ -414,8 +535,6 @@ function checkAnswer(selectedIndex, buttonElement, question) {
         }, 1000);
     } else {
         buttonElement.classList.add('wrong');
-        
-        // Показываем пояснение
         explanationText.textContent = question.explanation;
         explanationDiv.style.display = 'block';
         
@@ -447,7 +566,6 @@ function checkAnswer(selectedIndex, buttonElement, question) {
     saveProgress();
 }
 
-// Следующий вопрос
 function nextQuestion() {
     const lesson = lessons[currentLesson];
     
@@ -459,7 +577,6 @@ function nextQuestion() {
     }
 }
 
-// Завершить урок
 function completeLesson() {
     const lesson = lessons[currentLesson];
     lesson.completed = true;
@@ -488,7 +605,6 @@ function completeLesson() {
     renderLessons();
 }
 
-// Обновить UI
 function updateUI() {
     if (xpText) xpText.textContent = `${currentXP} XP`;
     if (xpFill) {
@@ -508,13 +624,11 @@ function updateUI() {
     }
 }
 
-// Показать окно восстановления
 function showReviveModal() {
     reviveModal.classList.add('active');
     startReviveTimer();
 }
 
-// Таймер восстановления
 function startReviveTimer() {
     let timeLeft = 30;
     reviveBtn.disabled = true;
@@ -538,7 +652,6 @@ function startReviveTimer() {
     }, 30000);
 }
 
-// Восстановить жизни
 function reviveLives() {
     if (reviveBtn.disabled) return;
     
@@ -557,16 +670,23 @@ function reviveLives() {
     }, 2000);
 }
 
-// Закрыть модальное окно урока
 function closeLessonModal() {
     lessonModal.classList.remove('active');
     waitingForNext = false;
     explanationDiv.style.display = 'none';
 }
 
-// Регистрация Service Worker (PWA)
+function showError(message) {
+    owlTooltip.textContent = message;
+    owlTooltip.style.display = 'block';
+    setTimeout(() => {
+        owlTooltip.style.display = 'none';
+    }, 3000);
+}
+
+// PWA регистрация
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js')
-        .then(reg => console.log('SW registered:', reg))
+        .then(reg => console.log('SW registered'))
         .catch(err => console.log('SW error:', err));
 }
