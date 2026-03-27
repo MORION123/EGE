@@ -1,22 +1,12 @@
-// ==================== КОНФИГУРАЦИЯ ====================
-const CLOUD_CONFIG = {
-    API_KEY: '$2a$10$Vxl9lZUaGmUANs2JQBixL.O37Ot8zteKKSAR98p.eP6.aTeQ4Brwu',
-    BASE_URL: 'https://api.jsonbin.io/v3/b'
-};
-
-const USERS_BIN_ID = '69c60d616887921da853c0a2';
-
-// ==================== БАНК ЗАДАНИЙ (РЕАЛЬНЫЕ ПРОТОТИПЫ ЕГЭ) ====================
+// ==================== БАНК ЗАДАНИЙ ====================
 const tasksBank = {
     1: [
-        { text: "Шоколадка стоит 35 рублей. В воскресенье в супермаркете действует специальное предложение: заплатив за две шоколадки, покупатель получает три (одну в подарок). Какое наибольшее количество шоколадок можно получить, имея 200 рублей в воскресенье?", answer: "8", solution: "200 ÷ 35 = 5 (остаток 25) — можно купить 5 шоколадок. По акции за 2 получаешь 3 → за 4 → 6 шоколадок, плюс 1 оставшаяся → 7, но можно ещё: купить 2 → 3, потом ещё 2 → 3 (уже 6), остаётся 30 руб → не хватает. Ответ: 8." },
-        { text: "Тетрадь стоит 24 рубля. Сколько рублей заплатит покупатель за 60 тетрадей, если при покупке более 50 тетрадей магазин делает скидку 10% от стоимости всей покупки?", answer: "1296", solution: "60 × 24 = 1440 руб. Скидка 10%: 1440 × 0.9 = 1296 руб." },
-        { text: "Флакон шампуня стоит 160 рублей. Какое наибольшее число флаконов можно купить на 1000 рублей во время распродажи, когда скидка составляет 25%?", answer: "8", solution: "160 × 0.75 = 120 руб. 1000 ÷ 120 ≈ 8.33 → 8 флаконов." },
-        { text: "Сырок стоит 7 рублей 20 копеек. Какое наибольшее число сырков можно купить на 60 рублей?", answer: "8", solution: "60 ÷ 7.2 = 8.33 → 8 сырков." }
+        { text: "Шоколадка стоит 35 рублей. В воскресенье действует акция: заплатив за две, получаешь три. Какое наибольшее количество шоколадок можно получить, имея 200 рублей?", answer: "8", solution: "200 ÷ 35 = 5 штук. По акции за 2 → 3, за 4 → 6, плюс 1 остаётся → 7, но можно купить ещё 2 → 3 (уже 6), остаётся 30 руб → не хватает. Ответ: 8." },
+        { text: "Тетрадь стоит 24 рубля. При покупке более 50 тетрадей скидка 10%. Сколько рублей заплатит покупатель за 60 тетрадей?", answer: "1296", solution: "60 × 24 = 1440 руб. Скидка 10%: 1440 × 0.9 = 1296 руб." },
+        { text: "Флакон шампуня стоит 160 рублей. Во время распродажи скидка 25%. Сколько флаконов можно купить на 1000 рублей?", answer: "8", solution: "160 × 0.75 = 120 руб. 1000 ÷ 120 = 8.33 → 8 флаконов." }
     ],
     2: [
-        { text: "На графике показано изменение температуры воздуха. Определите разность между наибольшей и наименьшей температурой за сутки.", answer: "12", solution: "Максимум +8°, минимум -4° → разность 12°." },
-        { text: "На диаграмме показана среднемесячная температура. Найдите разницу между самым теплым и самым холодным месяцем.", answer: "24", solution: "Июль +22°, январь -2° → разность 24°." }
+        { text: "На графике показано изменение температуры. Найдите разность между наибольшей и наименьшей температурой за сутки.", answer: "12", solution: "Максимум +8°, минимум -4° → разность 12°." }
     ],
     3: [
         { text: "Площадь квадрата равна 36. Найдите его периметр.", answer: "24", solution: "Сторона = √36 = 6. Периметр = 4 × 6 = 24." },
@@ -26,19 +16,19 @@ const tasksBank = {
         { text: "Найдите значение выражения: (3²)³ × 3⁵ ÷ 3⁸", answer: "27", solution: "3⁶ × 3⁵ = 3¹¹; 3¹¹ ÷ 3⁸ = 3³ = 27." }
     ],
     5: [
-        { text: "В случайном эксперименте бросают две игральные кости. Найдите вероятность того, что в сумме выпадет 8 очков.", answer: "0.14", solution: "Всего исходов 36. Благоприятные: (2,6), (3,5), (4,4), (5,3), (6,2) — 5. 5/36 ≈ 0.1389 → 0.14." }
+        { text: "Бросают две игральные кости. Найдите вероятность того, что в сумме выпадет 8 очков.", answer: "0.14", solution: "Всего исходов 36. Благоприятные: (2,6),(3,5),(4,4),(5,3),(6,2) — 5. 5/36 ≈ 0.1389 → 0.14." }
     ],
     6: [
-        { text: "Для квартиры площадью 45 м² заказан натяжной потолок. Цена работы 200 руб/м². Стоимость материала 300 руб/м². Сколько рублей составит общая стоимость?", answer: "22500", solution: "(200 + 300) × 45 = 500 × 45 = 22500 руб." }
+        { text: "Для квартиры 45 м² натяжной потолок. Цена работы 200 руб/м², материала 300 руб/м². Сколько рублей составит общая стоимость?", answer: "22500", solution: "(200 + 300) × 45 = 500 × 45 = 22500 руб." }
     ],
     7: [
-        { text: "На рисунке жирными точками показана цена нефти. Определите, сколько дней цена была выше 70 долларов.", answer: "5", solution: "Считаем точки выше 70." }
+        { text: "На рисунке показана цена нефти. Сколько дней цена была выше 70 долларов?", answer: "5", solution: "Считаем точки выше 70." }
     ],
     8: [
-        { text: "Выберите верное утверждение: 1) Если два угла треугольника равны, то треугольник равнобедренный. 2) Любой прямоугольник является квадратом. 3) Сумма углов треугольника равна 360°.", answer: "1", solution: "Только первое верно." }
+        { text: "Выберите верное утверждение: 1) Если два угла равны, то треугольник равнобедренный. 2) Любой прямоугольник — квадрат. 3) Сумма углов треугольника 360°.", answer: "1", solution: "Только первое верно." }
     ],
     9: [
-        { text: "Найдите площадь треугольника, изображённого на клетчатой бумаге (сторона клетки 1 см).", answer: "6", solution: "S = ½ × основание × высота = ½ × 4 × 3 = 6." }
+        { text: "Найдите площадь треугольника на клетчатой бумаге (сторона клетки 1 см).", answer: "6", solution: "S = ½ × 4 × 3 = 6." }
     ],
     10: [
         { text: "Колесо имеет 5 спиц. Найдите угол между соседними спицами.", answer: "72", solution: "360° ÷ 5 = 72°." }
@@ -47,19 +37,19 @@ const tasksBank = {
         { text: "Объём куба равен 125. Найдите площадь его поверхности.", answer: "150", solution: "Сторона = ∛125 = 5. S = 6 × 5² = 150." }
     ],
     12: [
-        { text: "В треугольнике ABC угол C = 90°, AB = 10, AC = 6. Найдите BC.", answer: "8", solution: "BC = √(AB² - AC²) = √(100 - 36) = √64 = 8." }
+        { text: "В треугольнике ABC угол C = 90°, AB = 10, AC = 6. Найдите BC.", answer: "8", solution: "BC = √(10² - 6²) = √(100 - 36) = √64 = 8." }
     ],
     13: [
-        { text: "В правильной четырёхугольной пирамиде сторона основания 6, апофема 5. Найдите площадь боковой поверхности.", answer: "60", solution: "S = ½ × P × l = ½ × (4×6) × 5 = 60." }
+        { text: "В правильной четырёхугольной пирамиде сторона основания 6, апофема 5. Найдите площадь боковой поверхности.", answer: "60", solution: "S = ½ × (4×6) × 5 = 60." }
     ],
     14: [
-        { text: "Найдите значение выражения: 0.7 × 0.3 + 0.3 × 0.3", answer: "0.3", solution: "0.3 × (0.7 + 0.3) = 0.3 × 1 = 0.3." }
+        { text: "Найдите значение: 0.7 × 0.3 + 0.3 × 0.3", answer: "0.3", solution: "0.3 × (0.7 + 0.3) = 0.3 × 1 = 0.3." }
     ],
     15: [
-        { text: "Билет на поезд стоит 1800 руб. Школьникам скидка 50%. Сколько рублей стоят билеты для группы из 4 взрослых и 6 школьников?", answer: "12600", solution: "Взрослые: 4×1800=7200. Школьники: 6×900=5400. Итого: 12600." }
+        { text: "Билет на поезд 1800 руб. Школьникам скидка 50%. Сколько рублей стоят билеты для 4 взрослых и 6 школьников?", answer: "12600", solution: "4×1800=7200, 6×900=5400, итого 12600." }
     ],
     16: [
-        { text: "Упростите выражение: (a - 3)² - a(a - 6)", answer: "9", solution: "a² - 6a + 9 - a² + 6a = 9." }
+        { text: "Упростите: (a - 3)² - a(a - 6)", answer: "9", solution: "a² - 6a + 9 - a² + 6a = 9." }
     ],
     17: [
         { text: "Решите уравнение: 4ˣ = 64", answer: "3", solution: "4³ = 64 → x = 3." }
@@ -68,41 +58,40 @@ const tasksBank = {
         { text: "Решите неравенство: 2x - 5 > 3", answer: "4", solution: "2x > 8 → x > 4." }
     ],
     19: [
-        { text: "Найдите трёхзначное число, кратное 5 и 9, все цифры которого различны.", answer: "135", solution: "Число кратно 5 → оканчивается на 0 или 5. Кратно 9 → сумма цифр кратна 9. 135: 1+3+5=9." }
+        { text: "Найдите трёхзначное число, кратное 5 и 9, все цифры различны.", answer: "135", solution: "Число кратно 5 → оканчивается на 0 или 5. Кратно 9 → сумма цифр кратна 9. 135: 1+3+5=9." }
     ],
     20: [
-        { text: "Из пункта А в пункт В вышел пешеход со скоростью 5 км/ч. Через 2 часа из А в В выехал велосипедист со скоростью 15 км/ч. На каком расстоянии от А велосипедист догонит пешехода?", answer: "15", solution: "За 2 часа пешеход прошёл 10 км. Скорость сближения 10 км/ч → время 1 час. Расстояние = 15×1 = 15 км." }
+        { text: "Пешеход вышел из А в В со скоростью 5 км/ч. Через 2 часа выехал велосипедист 15 км/ч. На каком расстоянии от А он догонит пешехода?", answer: "15", solution: "Пешеход прошёл 10 км. Скорость сближения 10 км/ч → время 1 ч. Расстояние = 15×1 = 15 км." }
     ],
     21: [
-        { text: "Сколько существует различных способов рассадить 5 человек на 5 стульях?", answer: "120", solution: "5! = 120." }
+        { text: "Сколько способов рассадить 5 человек на 5 стульях?", answer: "120", solution: "5! = 120." }
     ]
 };
 
-// Дополняем банк для каждого задания (чтобы было минимум 3 варианта)
+// Дополняем задания (минимум 3 варианта)
 for (let i = 1; i <= 21; i++) {
     if (!tasksBank[i]) tasksBank[i] = [];
     while (tasksBank[i].length < 3) {
         tasksBank[i].push({
-            text: `Задание ${i}. Решите пример и введите ответ.`,
+            text: `Задание ${i}. Решите и введите ответ.`,
             answer: `${i * 5}`,
             solution: `Решение: ${i * 5}.`
         });
     }
 }
 
-// ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
+// ==================== ПЕРЕМЕННЫЕ ====================
 let currentUser = null;
-let userLevel = 1;
 let currentXP = 0;
 let xpToNextLevel = 100;
-let completedTasks = {}; // { taskId: [completedVariants] }
+let userLevel = 1;
+let completedTasks = {};
 let currentTaskId = null;
 let currentVariant = null;
 let currentVariantIndex = null;
-let isOnline = navigator.onLine;
 
 // DOM элементы
-let authScreen, mainApp, usernameSpan, userAvatar, logoutBtn, syncStatus;
+let authScreen, mainApp, usernameSpan, userAvatar, logoutBtn;
 let tasksGrid, taskCard, closeTaskBtn, taskTitle, taskText, taskAnswer, checkBtn;
 let taskFeedback, taskSolution, solutionText, levelBadge, xpFill, xpText, owlTooltip;
 
@@ -139,14 +128,10 @@ function addXP(amount) {
 // ==================== ЗАДАНИЯ ====================
 function getRandomVariant(taskId) {
     const variants = tasksBank[taskId];
-    if (!variants || variants.length === 0) return null;
-    
     const completed = completedTasks[taskId] || [];
     const available = variants.filter((_, idx) => !completed.includes(idx));
     
-    if (available.length === 0) {
-        return null;
-    }
+    if (available.length === 0) return null;
     
     const randomIndex = Math.floor(Math.random() * available.length);
     const originalIndex = variants.findIndex(v => v === available[randomIndex]);
@@ -154,24 +139,16 @@ function getRandomVariant(taskId) {
 }
 
 function markTaskCompleted(taskId, variantIndex) {
-    if (!completedTasks[taskId]) {
-        completedTasks[taskId] = [];
-    }
+    if (!completedTasks[taskId]) completedTasks[taskId] = [];
     if (!completedTasks[taskId].includes(variantIndex)) {
         completedTasks[taskId].push(variantIndex);
     }
     
-    // Обновляем UI кнопки
     const btn = document.querySelector(`.task-btn[data-task="${taskId}"]`);
-    if (btn) {
-        const total = tasksBank[taskId].length;
-        const completedCount = completedTasks[taskId].length;
-        if (completedCount >= total) {
-            btn.classList.add('completed');
-            btn.title = 'Все варианты пройдены!';
-        }
+    if (btn && completedTasks[taskId].length >= tasksBank[taskId].length) {
+        btn.classList.add('completed');
+        btn.title = 'Все варианты пройдены!';
     }
-    
     saveProgress();
 }
 
@@ -180,7 +157,7 @@ function openTask(taskId) {
     const result = getRandomVariant(taskId);
     
     if (!result) {
-        showError('Все варианты этого задания пройдены! 🎉');
+        showTip('🎉 Все варианты этого задания пройдены!');
         return;
     }
     
@@ -195,7 +172,6 @@ function openTask(taskId) {
     taskFeedback.innerHTML = '';
     taskSolution.style.display = 'none';
     taskCard.style.display = 'block';
-    
     taskCard.scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -203,8 +179,7 @@ function checkAnswer() {
     if (!currentVariant) return;
     
     const userAnswer = taskAnswer.value.trim();
-    const correctAnswer = currentVariant.answer;
-    const isCorrect = userAnswer === correctAnswer;
+    const isCorrect = userAnswer === currentVariant.answer;
     
     if (isCorrect) {
         taskFeedback.innerHTML = '✅ Правильно! +50 XP';
@@ -218,39 +193,31 @@ function checkAnswer() {
         taskSolution.style.display = 'block';
         
         checkBtn.disabled = true;
-        setTimeout(() => {
-            checkBtn.disabled = false;
-        }, 2000);
+        setTimeout(() => { checkBtn.disabled = false; }, 2000);
         
-        // Автоматически предлагаем новое задание через 2 секунды
         setTimeout(() => {
-            if (currentTaskId) {
-                const result = getRandomVariant(currentTaskId);
-                if (result) {
-                    currentVariant = result.variant;
-                    currentVariantIndex = result.index;
-                    taskText.textContent = currentVariant.text;
-                    taskAnswer.value = '';
-                    taskFeedback.style.display = 'none';
-                    taskSolution.style.display = 'none';
-                    owlTooltip.textContent = 'Новое задание! Решай дальше! 🚀';
-                    setTimeout(() => owlTooltip.style.display = 'none', 2000);
-                } else {
-                    taskFeedback.innerHTML = '🎉 Поздравляю! Ты прошёл все варианты этого задания!';
-                    taskFeedback.className = 'task-feedback correct';
-                    taskFeedback.style.display = 'block';
-                }
+            const result = getRandomVariant(currentTaskId);
+            if (result) {
+                currentVariant = result.variant;
+                currentVariantIndex = result.index;
+                taskText.textContent = currentVariant.text;
+                taskAnswer.value = '';
+                taskFeedback.style.display = 'none';
+                taskSolution.style.display = 'none';
+                showTip('Новое задание! Решай дальше! 🚀');
+            } else {
+                taskFeedback.innerHTML = '🎉 Поздравляю! Ты прошёл все варианты этого задания!';
+                taskFeedback.style.display = 'block';
             }
         }, 2000);
     } else {
-        taskFeedback.innerHTML = `❌ Неправильно. Правильный ответ: ${correctAnswer}`;
+        taskFeedback.innerHTML = `❌ Неправильно. Правильный ответ: ${currentVariant.answer}`;
         taskFeedback.className = 'task-feedback wrong';
         taskFeedback.style.display = 'block';
         
         solutionText.textContent = currentVariant.solution;
         taskSolution.style.display = 'block';
     }
-    
     saveProgress();
 }
 
@@ -258,18 +225,14 @@ function closeTask() {
     taskCard.style.display = 'none';
     currentTaskId = null;
     currentVariant = null;
-    currentVariantIndex = null;
 }
 
-function showError(msg) {
+function showTip(msg) {
     owlTooltip.textContent = msg;
     owlTooltip.style.display = 'block';
-    setTimeout(() => {
-        owlTooltip.style.display = 'none';
-    }, 3000);
+    setTimeout(() => { owlTooltip.style.display = 'none'; }, 2000);
 }
 
-// ==================== РЕНДЕР ЗАДАНИЙ ====================
 function renderTasks() {
     tasksGrid.innerHTML = '';
     for (let i = 1; i <= 21; i++) {
@@ -279,60 +242,58 @@ function renderTasks() {
         btn.dataset.task = i;
         
         const completed = completedTasks[i] || [];
-        const total = tasksBank[i].length;
-        if (completed.length >= total) {
+        if (completed.length >= tasksBank[i].length) {
             btn.classList.add('completed');
             btn.title = 'Все варианты пройдены!';
         }
-        
         btn.addEventListener('click', () => openTask(i));
         tasksGrid.appendChild(btn);
     }
 }
 
 // ==================== АВТОРИЗАЦИЯ ====================
-function getUsersFromLocal() {
-    const saved = localStorage.getItem('egelingo_users_cache');
+function loadUsers() {
+    const saved = localStorage.getItem('egelingo_users');
     return saved ? JSON.parse(saved) : {};
 }
 
-function saveUsersToLocal(users) {
-    localStorage.setItem('egelingo_users_cache', JSON.stringify(users));
+function saveUsers(users) {
+    localStorage.setItem('egelingo_users', JSON.stringify(users));
 }
 
-function register(email, password, name) {
-    email = email.toLowerCase().trim();
-    const users = getUsersFromLocal();
+function register(username, password) {
+    username = username.trim();
+    const users = loadUsers();
     
-    if (users[email]) {
+    if (users[username]) {
         showAuthError('Пользователь уже существует');
         return false;
     }
-    if (password.length < 6) {
-        showAuthError('Пароль минимум 6 символов');
+    if (password.length < 4) {
+        showAuthError('Пароль минимум 4 символа');
         return false;
     }
     
-    users[email] = {
+    users[username] = {
         password: btoa(password),
-        name: name || email.split('@')[0],
+        name: username,
         createdAt: new Date().toISOString()
     };
-    saveUsersToLocal(users);
+    saveUsers(users);
     return true;
 }
 
-function login(email, password) {
-    email = email.toLowerCase().trim();
-    const users = getUsersFromLocal();
-    const user = users[email];
+function login(username, password) {
+    username = username.trim();
+    const users = loadUsers();
+    const user = users[username];
     
     if (!user || user.password !== btoa(password)) {
-        showAuthError('Неверный email или пароль');
+        showAuthError('Неверное имя или пароль');
         return false;
     }
     
-    currentUser = { uid: email, name: user.name, email: email };
+    currentUser = { uid: username, name: username };
     localStorage.setItem('egelingo_user', JSON.stringify(currentUser));
     return true;
 }
@@ -354,22 +315,21 @@ function loadProgress() {
 
 function saveProgress() {
     if (!currentUser) return;
-    const data = {
+    localStorage.setItem(`egelingo_progress_${currentUser.uid}`, JSON.stringify({
         xp: currentXP,
         completedTasks: completedTasks
-    };
-    localStorage.setItem(`egelingo_progress_${currentUser.uid}`, JSON.stringify(data));
+    }));
 }
 
 function showMainApp() {
-    if (authScreen) authScreen.style.display = 'none';
-    if (mainApp) mainApp.style.display = 'block';
-    if (usernameSpan) usernameSpan.textContent = currentUser?.name || 'Ученик';
+    authScreen.style.display = 'none';
+    mainApp.style.display = 'block';
+    usernameSpan.textContent = currentUser.name;
     loadProgress();
 }
 
 function handleLogout() {
-    if (confirm('Вы уверены, что хотите выйти?')) {
+    if (confirm('Выйти из аккаунта?')) {
         localStorage.removeItem('egelingo_user');
         currentUser = null;
         authScreen.style.display = 'flex';
@@ -388,14 +348,13 @@ function showAuthError(msg) {
 
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('📱 EgeLingo v2.0 - Тренажёр ЕГЭ по математике');
+    console.log('📱 EgeLingo - Тренажёр ЕГЭ по математике');
     
     authScreen = document.getElementById('authScreen');
     mainApp = document.getElementById('mainApp');
     usernameSpan = document.getElementById('username');
     userAvatar = document.getElementById('userAvatar');
     logoutBtn = document.getElementById('logoutBtn');
-    syncStatus = document.getElementById('syncStatus');
     tasksGrid = document.getElementById('tasksGrid');
     taskCard = document.getElementById('taskCard');
     closeTaskBtn = document.getElementById('closeTaskBtn');
@@ -411,60 +370,44 @@ document.addEventListener('DOMContentLoaded', () => {
     xpText = document.getElementById('xpText');
     owlTooltip = document.getElementById('owlTooltip');
     
-    // События
-    if (closeTaskBtn) closeTaskBtn.addEventListener('click', closeTask);
-    if (checkBtn) checkBtn.addEventListener('click', checkAnswer);
-    if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
+    closeTaskBtn.addEventListener('click', closeTask);
+    checkBtn.addEventListener('click', checkAnswer);
+    logoutBtn.addEventListener('click', handleLogout);
+    taskAnswer.addEventListener('keypress', (e) => { if (e.key === 'Enter') checkAnswer(); });
     
-    if (taskAnswer) {
-        taskAnswer.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') checkAnswer();
-        });
-    }
-    
-    // Авторизация
+    // Вкладки
     const tabs = document.querySelectorAll('.auth-tab');
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
     
-    if (tabs.length) {
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                tabs.forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                if (tab.dataset.tab === 'login') {
-                    loginForm.style.display = 'block';
-                    registerForm.style.display = 'none';
-                } else {
-                    loginForm.style.display = 'none';
-                    registerForm.style.display = 'block';
-                }
-            });
-        });
-    }
-    
-    const loginBtn = document.getElementById('loginBtn');
-    const registerBtn = document.getElementById('registerBtn');
-    const loginEmail = document.getElementById('loginEmail');
-    const loginPassword = document.getElementById('loginPassword');
-    const registerName = document.getElementById('registerName');
-    const registerEmail = document.getElementById('registerEmail');
-    const registerPassword = document.getElementById('registerPassword');
-    
-    if (loginBtn) {
-        loginBtn.addEventListener('click', () => {
-            if (login(loginEmail.value, loginPassword.value)) showMainApp();
-        });
-    }
-    
-    if (registerBtn) {
-        registerBtn.addEventListener('click', () => {
-            if (register(registerEmail.value, registerPassword.value, registerName.value)) {
-                login(registerEmail.value, registerPassword.value);
-                showMainApp();
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            if (tab.dataset.tab === 'login') {
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+            } else {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
             }
         });
-    }
+    });
+    
+    document.getElementById('loginBtn').addEventListener('click', () => {
+        const username = document.getElementById('loginUsername').value;
+        const password = document.getElementById('loginPassword').value;
+        if (login(username, password)) showMainApp();
+    });
+    
+    document.getElementById('registerBtn').addEventListener('click', () => {
+        const username = document.getElementById('registerUsername').value;
+        const password = document.getElementById('registerPassword').value;
+        if (register(username, password)) {
+            login(username, password);
+            showMainApp();
+        }
+    });
     
     const saved = localStorage.getItem('egelingo_user');
     if (saved) {
@@ -472,41 +415,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showMainApp();
     }
     
-    // Подсказка совы
-    const owlAvatar = document.getElementById('owlAvatar');
-    if (owlAvatar) {
-        owlAvatar.addEventListener('click', () => {
-            owlTooltip.textContent = 'Выбери задание 1–21, реши и получи XP!';
-            owlTooltip.style.display = 'block';
-            setTimeout(() => {
-                owlTooltip.style.display = 'none';
-            }, 3000);
-        });
-    }
-    
-    // Online/offline
-    window.addEventListener('online', () => {
-        if (syncStatus) {
-            syncStatus.className = 'sync-status';
-            const textSpan = syncStatus.querySelector('.sync-text');
-            if (textSpan) textSpan.textContent = 'Синхронизировано';
-            setTimeout(() => syncStatus.style.opacity = '0', 2000);
-        }
+    document.getElementById('owlAvatar').addEventListener('click', () => {
+        showTip('Выбери задание 1–21 и реши его!');
     });
-    
-    window.addEventListener('offline', () => {
-        if (syncStatus) {
-            syncStatus.classList.add('error');
-            const textSpan = syncStatus.querySelector('.sync-text');
-            if (textSpan) textSpan.textContent = 'Офлайн-режим';
-            syncStatus.style.opacity = '1';
-        }
-    });
-    
-    console.log('✅ Приложение готово!');
 });
-
-// Service Worker
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/EGE/sw.js').catch(err => console.log('SW not available'));
-}
