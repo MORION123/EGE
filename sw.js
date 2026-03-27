@@ -1,10 +1,10 @@
 const CACHE_NAME = 'egelingo-v1';
 const urlsToCache = [
-    '/',
-    '/index.html',
-    '/style.css',
-    '/script.js',
-    '/manifest.json',
+    '/EGE/',
+    '/EGE/index.html',
+    '/EGE/style.css',
+    '/EGE/script.js',
+    '/EGE/manifest.json',
     'https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap',
     'https://accounts.google.com/gsi/client'
 ];
@@ -35,4 +35,4 @@ self.addEventListener('activate', event => {
             );
         })
     );
-});
+});;
