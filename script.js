@@ -1,68 +1,36 @@
-// ==================== БАНКИ ЗАДАНИЙ ПО ПРЕДМЕТАМ ====================
-const subjectsBank = {
-    math: {
-        name: "Математика",
-        tasks: {
-            1: [
-                { text: "Шоколадка стоит 35 рублей. Акция: за две — третья в подарок. Сколько шоколадок можно получить на 200 рублей?", answer: "7", solution: "200÷35=5 штук. 5 шоколадок дают 2 подарка (за 4 штуки) → 7. Остаток 25 руб." },
-                { text: "Тетрадь стоит 24 рубля. При покупке более 50 тетрадей скидка 10%. Сколько рублей за 60 тетрадей?", answer: "1296", solution: "60×24=1440, 1440×0.9=1296 руб." }
-            ],
-            2: [
-                { text: "Температура: -2°, -5°, 0°, +6°, +8°, +3°, -1°. Найдите разность max и min.", answer: "13", solution: "8 - (-5) = 13°." }
-            ],
-            3: [
-                { text: "Площадь квадрата 36. Найдите периметр.", answer: "24", solution: "Сторона=6, P=24." },
-                { text: "Периметр квадрата 32. Найдите площадь.", answer: "64", solution: "Сторона=8, S=64." }
-            ]
-        }
-    },
-    russian: {
-        name: "Русский язык",
-        tasks: {
-            1: [
-                { text: "В каком слове ударение падает на первый слог? 1) красивЕе 2) тортЫ 3) бАнты 4) звонИт", answer: "3", solution: "Правильно: бАнты." },
-                { text: "В каком слове ударение падает на последний слог? 1) клАла 2) создалА 3) нАчал 4) пОняв", answer: "2", solution: "Правильно: создалА." }
-            ],
-            2: [
-                { text: "В каком предложении вместо слова ДЛИННЫЙ нужно употребить ДЛИТЕЛЬНЫЙ? 1) ДЛИННЫЙ хвост. 2) ДЛИННЫЙ путь. 3) ДЛИННОЕ совещание.", answer: "3", solution: "ДЛИТЕЛЬНОЕ совещание." }
-            ]
-        }
-    },
-    physics: {
-        name: "Физика",
-        tasks: {
-            1: [
-                { text: "Автомобиль движется со скоростью 72 км/ч. Выразите скорость в м/с.", answer: "20", solution: "72 ÷ 3.6 = 20 м/с." },
-                { text: "Скорость звука в воздухе 340 м/с. Выразите в км/ч.", answer: "1224", solution: "340 × 3.6 = 1224 км/ч." }
-            ]
-        }
-    },
-    informatics: {
-        name: "Информатика",
-        tasks: {
-            1: [
-                { text: "Сколько бит в 1 байте?", answer: "8", solution: "1 байт = 8 бит." },
-                { text: "Сколько байт в 1 килобайте?", answer: "1024", solution: "1 КБ = 1024 байта." }
-            ]
-        }
-    }
-};
+// ==================== ЗАГРУЗКА ЗАДАНИЙ ИЗ ФАЙЛА ====================
+let subjectsBank = {};
 
-// Дополняем задания для каждого предмета до 21
-for (let subject in subjectsBank) {
-    for (let i = 1; i <= 21; i++) {
-        if (!subjectsBank[subject].tasks[i]) {
-            subjectsBank[subject].tasks[i] = [
-                { text: `Задание ${i}. Решите и введите ответ.`, answer: `${i}`, solution: `Ответ: ${i}.` }
-            ];
+async function loadTasks() {
+    try {
+        const response = await fetch('/EGE/tasks_math.json');
+        subjectsBank = await response.json();
+        
+        for (let subject in subjectsBank) {
+            for (let i = 1; i <= 21; i++) {
+                if (!subjectsBank[subject].tasks[i]) {
+                    subjectsBank[subject].tasks[i] = [
+                        { text: `Задание ${i}. Решите и введите ответ.`, answer: `${i}`, solution: `Ответ: ${i}.` }
+                    ];
+                }
+                while (subjectsBank[subject].tasks[i].length < 2) {
+                    subjectsBank[subject].tasks[i].push({
+                        text: `Задание ${i}. Введите ответ.`,
+                        answer: `${i}`,
+                        solution: `Ответ: ${i}.`
+                    });
+                }
+            }
         }
-        while (subjectsBank[subject].tasks[i].length < 2) {
-            subjectsBank[subject].tasks[i].push({
-                text: `Задание ${i}. Введите ответ.`,
-                answer: `${i}`,
-                solution: `Ответ: ${i}.`
-            });
+        
+        if (currentUser) {
+            renderTasks();
+            renderAchievements();
         }
+        
+        console.log('✅ Задания загружены');
+    } catch (error) {
+        console.error('Ошибка загрузки заданий:', error);
     }
 }
 
@@ -72,8 +40,7 @@ const achievementsList = [
     { id: "ten_tasks", name: "10 заданий", icon: "📚", condition: (stats) => stats.totalSolved >= 10 },
     { id: "fifty_tasks", name: "50 заданий", icon: "🏅", condition: (stats) => stats.totalSolved >= 50 },
     { id: "hundred_tasks", name: "100 заданий", icon: "🎖️", condition: (stats) => stats.totalSolved >= 100 },
-    { id: "perfect_math", name: "Математик", icon: "📐", condition: (stats) => stats.subjectMath >= 10 },
-    { id: "perfect_russian", name: "Филолог", icon: "📖", condition: (stats) => stats.subjectRussian >= 10 },
+    { id: "perfect_math", name: "Математик", icon: "📐", condition: (stats) => stats.subjectMath >= 20 },
     { id: "streak_5", name: "Серия 5", icon: "🔥", condition: (stats) => stats.streak >= 5 },
     { id: "streak_10", name: "Серия 10", icon: "⚡", condition: (stats) => stats.streak >= 10 }
 ];
@@ -207,6 +174,7 @@ function renderAchievements() {
 
 // ==================== ЗАДАНИЯ ====================
 function getRandomVariant(taskId) {
+    if (!subjectsBank[currentSubject]) return null;
     const tasks = subjectsBank[currentSubject].tasks;
     const variants = tasks[taskId];
     if (!variants) return null;
@@ -316,6 +284,7 @@ function closeTask() {
 }
 
 function renderTasks() {
+    if (!tasksGrid || !subjectsBank[currentSubject]) return;
     tasksGrid.innerHTML = '';
     const tasks = subjectsBank[currentSubject].tasks;
     
@@ -338,6 +307,7 @@ function renderTasks() {
 }
 
 function changeSubject(subject) {
+    if (!subjectsBank[subject]) return;
     currentSubject = subject;
     renderTasks();
     
@@ -481,7 +451,7 @@ function showAuthError(msg) {
 }
 
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     console.log('📱 EgeLingo v3.0 - Мультипредметный тренажёр ЕГЭ');
     
     authScreen = document.getElementById('authScreen');
@@ -573,6 +543,9 @@ document.addEventListener('DOMContentLoaded', () => {
             showTip('Выбери предмет и задание для тренировки!');
         });
     }
+    
+    // Загружаем задания из файла
+    await loadTasks();
     
     console.log('✅ Приложение готово!');
 });
