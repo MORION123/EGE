@@ -566,3 +566,59 @@ body {
         max-width: 80px;
     }
 }
+/* Дополнительные стили для синхронизации */
+.sync-status {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    font-size: 12px;
+    padding: 5px 12px;
+    margin-bottom: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    width: fit-content;
+    margin-left: auto;
+}
+
+.sync-icon {
+    font-size: 14px;
+}
+
+.sync-text {
+    color: #4a5568;
+}
+
+.sync-status.syncing .sync-icon {
+    animation: spin 1s linear infinite;
+}
+
+.sync-status.error .sync-text {
+    color: #f56565;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Google кнопка */
+.g_id_signin {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+/* Офлайн-индикатор */
+.offline-badge {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    background: #f56565;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    z-index: 1000;
+}
