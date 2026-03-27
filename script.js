@@ -7,12 +7,12 @@ const CLOUD_CONFIG = {
 const USERS_BIN_ID = '69c60d616887921da853c0a2';
 
 // ==================== БАНК ЗАДАНИЙ (РЕАЛЬНЫЕ ПРОТОТИПЫ ЕГЭ) ====================
-// Каждое задание имеет несколько вариантов
 const tasksBank = {
     1: [
         { text: "Шоколадка стоит 35 рублей. В воскресенье в супермаркете действует специальное предложение: заплатив за две шоколадки, покупатель получает три (одну в подарок). Какое наибольшее количество шоколадок можно получить, имея 200 рублей в воскресенье?", answer: "8", solution: "200 ÷ 35 = 5 (остаток 25) — можно купить 5 шоколадок. По акции за 2 получаешь 3 → за 4 → 6 шоколадок, плюс 1 оставшаяся → 7, но можно ещё: купить 2 → 3, потом ещё 2 → 3 (уже 6), остаётся 30 руб → не хватает. Ответ: 8." },
         { text: "Тетрадь стоит 24 рубля. Сколько рублей заплатит покупатель за 60 тетрадей, если при покупке более 50 тетрадей магазин делает скидку 10% от стоимости всей покупки?", answer: "1296", solution: "60 × 24 = 1440 руб. Скидка 10%: 1440 × 0.9 = 1296 руб." },
-        { text: "Флакон шампуня стоит 160 рублей. Какое наибольшее число флаконов можно купить на 1000 рублей во время распродажи, когда скидка составляет 25%?", answer: "8", solution: "160 × 0.75 = 120 руб. 1000 ÷ 120 ≈ 8.33 → 8 флаконов." }
+        { text: "Флакон шампуня стоит 160 рублей. Какое наибольшее число флаконов можно купить на 1000 рублей во время распродажи, когда скидка составляет 25%?", answer: "8", solution: "160 × 0.75 = 120 руб. 1000 ÷ 120 ≈ 8.33 → 8 флаконов." },
+        { text: "Сырок стоит 7 рублей 20 копеек. Какое наибольшее число сырков можно купить на 60 рублей?", answer: "8", solution: "60 ÷ 7.2 = 8.33 → 8 сырков." }
     ],
     2: [
         { text: "На графике показано изменение температуры воздуха. Определите разность между наибольшей и наименьшей температурой за сутки.", answer: "12", solution: "Максимум +8°, минимум -4° → разность 12°." },
@@ -78,18 +78,15 @@ const tasksBank = {
     ]
 };
 
-// Дополняем банк для каждого задания (чтобы было больше вариантов)
+// Дополняем банк для каждого задания (чтобы было минимум 3 варианта)
 for (let i = 1; i <= 21; i++) {
-    if (!tasksBank[i] || tasksBank[i].length < 3) {
-        tasksBank[i] = tasksBank[i] || [];
-        // Добавляем базовые задания для недостающих
-        for (let j = tasksBank[i].length; j < 5; j++) {
-            tasksBank[i].push({
-                text: `Задание ${i}. Пример задания для отработки. Решите и введите ответ.`,
-                answer: `${i * 5}`,
-                solution: `Решение задания ${i}: ${i * 5}.`
-            });
-        }
+    if (!tasksBank[i]) tasksBank[i] = [];
+    while (tasksBank[i].length < 3) {
+        tasksBank[i].push({
+            text: `Задание ${i}. Решите пример и введите ответ.`,
+            answer: `${i * 5}`,
+            solution: `Решение: ${i * 5}.`
+        });
     }
 }
 
@@ -98,11 +95,11 @@ let currentUser = null;
 let userLevel = 1;
 let currentXP = 0;
 let xpToNextLevel = 100;
-let completedTasks = {}; // { taskId: [completedVariants], lastVariantIndex }
+let completedTasks = {}; // { taskId: [completedVariants] }
 let currentTaskId = null;
 let currentVariant = null;
+let currentVariantIndex = null;
 let isOnline = navigator.onLine;
-let syncTimeout = null;
 
 // DOM элементы
 let authScreen, mainApp, usernameSpan, userAvatar, logoutBtn, syncStatus;
@@ -118,7 +115,7 @@ function updateLevel() {
     while (tempXP >= neededXP && newLevel < 100) {
         tempXP -= neededXP;
         newLevel++;
-        neededXP = Math.floor(neededXP * 1.2); // XP для следующего уровня увеличивается на 20%
+        neededXP = Math.floor(neededXP * 1.2);
     }
     
     userLevel = newLevel;
@@ -133,7 +130,6 @@ function updateLevel() {
     if (xpText) xpText.textContent = `${currentXP} / ${xpToNextLevel} XP`;
 }
 
-// Добавление XP (только за завершённые задания)
 function addXP(amount) {
     currentXP += amount;
     updateLevel();
@@ -145,36 +141,32 @@ function getRandomVariant(taskId) {
     const variants = tasksBank[taskId];
     if (!variants || variants.length === 0) return null;
     
-    // Получаем уже пройденные варианты
-    const completed = completedTasks[taskId]?.completedVariants || [];
+    const completed = completedTasks[taskId] || [];
     const available = variants.filter((_, idx) => !completed.includes(idx));
     
     if (available.length === 0) {
-        // Все варианты пройдены, сбрасываем для этого задания
-        completedTasks[taskId] = { completedVariants: [], lastIndex: null };
-        return variants[Math.floor(Math.random() * variants.length)];
+        return null;
     }
     
     const randomIndex = Math.floor(Math.random() * available.length);
     const originalIndex = variants.findIndex(v => v === available[randomIndex]);
-    return variants[originalIndex];
+    return { variant: variants[originalIndex], index: originalIndex };
 }
 
 function markTaskCompleted(taskId, variantIndex) {
     if (!completedTasks[taskId]) {
-        completedTasks[taskId] = { completedVariants: [], lastIndex: null };
+        completedTasks[taskId] = [];
     }
-    if (!completedTasks[taskId].completedVariants.includes(variantIndex)) {
-        completedTasks[taskId].completedVariants.push(variantIndex);
+    if (!completedTasks[taskId].includes(variantIndex)) {
+        completedTasks[taskId].push(variantIndex);
     }
-    completedTasks[taskId].lastIndex = variantIndex;
     
     // Обновляем UI кнопки
     const btn = document.querySelector(`.task-btn[data-task="${taskId}"]`);
     if (btn) {
-        const variantsCount = tasksBank[taskId].length;
-        const completedCount = completedTasks[taskId].completedVariants.length;
-        if (completedCount >= variantsCount) {
+        const total = tasksBank[taskId].length;
+        const completedCount = completedTasks[taskId].length;
+        if (completedCount >= total) {
             btn.classList.add('completed');
             btn.title = 'Все варианты пройдены!';
         }
@@ -185,57 +177,76 @@ function markTaskCompleted(taskId, variantIndex) {
 
 function openTask(taskId) {
     currentTaskId = taskId;
-    currentVariant = getRandomVariant(taskId);
+    const result = getRandomVariant(taskId);
     
-    if (!currentVariant) {
-        showError('Нет доступных заданий');
+    if (!result) {
+        showError('Все варианты этого задания пройдены! 🎉');
         return;
     }
+    
+    currentVariant = result.variant;
+    currentVariantIndex = result.index;
     
     taskTitle.textContent = `Задание ${taskId}`;
     taskText.textContent = currentVariant.text;
     taskAnswer.value = '';
     taskFeedback.className = 'task-feedback';
     taskFeedback.style.display = 'none';
+    taskFeedback.innerHTML = '';
     taskSolution.style.display = 'none';
     taskCard.style.display = 'block';
     
-    // Прокручиваем к карточке
     taskCard.scrollIntoView({ behavior: 'smooth' });
 }
 
 function checkAnswer() {
+    if (!currentVariant) return;
+    
     const userAnswer = taskAnswer.value.trim();
     const correctAnswer = currentVariant.answer;
     const isCorrect = userAnswer === correctAnswer;
     
     if (isCorrect) {
-        taskFeedback.textContent = '✅ Правильно! +50 XP';
+        taskFeedback.innerHTML = '✅ Правильно! +50 XP';
         taskFeedback.className = 'task-feedback correct';
         taskFeedback.style.display = 'block';
         
-        // Находим индекс варианта
-        const variantIndex = tasksBank[currentTaskId].findIndex(v => v === currentVariant);
-        markTaskCompleted(currentTaskId, variantIndex);
-        
-        // Добавляем XP (только за новое задание)
+        markTaskCompleted(currentTaskId, currentVariantIndex);
         addXP(50);
         
-        // Показываем решение
         solutionText.textContent = currentVariant.solution;
         taskSolution.style.display = 'block';
         
-        // Блокируем кнопку проверки
         checkBtn.disabled = true;
         setTimeout(() => {
             checkBtn.disabled = false;
-        }, 3000);
+        }, 2000);
+        
+        // Автоматически предлагаем новое задание через 2 секунды
+        setTimeout(() => {
+            if (currentTaskId) {
+                const result = getRandomVariant(currentTaskId);
+                if (result) {
+                    currentVariant = result.variant;
+                    currentVariantIndex = result.index;
+                    taskText.textContent = currentVariant.text;
+                    taskAnswer.value = '';
+                    taskFeedback.style.display = 'none';
+                    taskSolution.style.display = 'none';
+                    owlTooltip.textContent = 'Новое задание! Решай дальше! 🚀';
+                    setTimeout(() => owlTooltip.style.display = 'none', 2000);
+                } else {
+                    taskFeedback.innerHTML = '🎉 Поздравляю! Ты прошёл все варианты этого задания!';
+                    taskFeedback.className = 'task-feedback correct';
+                    taskFeedback.style.display = 'block';
+                }
+            }
+        }, 2000);
     } else {
-        taskFeedback.textContent = `❌ Неправильно. Правильный ответ: ${correctAnswer}`;
+        taskFeedback.innerHTML = `❌ Неправильно. Правильный ответ: ${correctAnswer}`;
         taskFeedback.className = 'task-feedback wrong';
         taskFeedback.style.display = 'block';
         
-        // Показываем решение
         solutionText.textContent = currentVariant.solution;
         taskSolution.style.display = 'block';
     }
@@ -247,6 +258,15 @@ function closeTask() {
     taskCard.style.display = 'none';
     currentTaskId = null;
     currentVariant = null;
+    currentVariantIndex = null;
+}
+
+function showError(msg) {
+    owlTooltip.textContent = msg;
+    owlTooltip.style.display = 'block';
+    setTimeout(() => {
+        owlTooltip.style.display = 'none';
+    }, 3000);
 }
 
 // ==================== РЕНДЕР ЗАДАНИЙ ====================
@@ -258,7 +278,7 @@ function renderTasks() {
         btn.textContent = i;
         btn.dataset.task = i;
         
-        const completed = completedTasks[i]?.completedVariants || [];
+        const completed = completedTasks[i] || [];
         const total = tasksBank[i].length;
         if (completed.length >= total) {
             btn.classList.add('completed');
@@ -349,7 +369,7 @@ function showMainApp() {
 }
 
 function handleLogout() {
-    if (confirm('Выйти?')) {
+    if (confirm('Вы уверены, что хотите выйти?')) {
         localStorage.removeItem('egelingo_user');
         currentUser = null;
         authScreen.style.display = 'flex';
@@ -368,6 +388,8 @@ function showAuthError(msg) {
 
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('📱 EgeLingo v2.0 - Тренажёр ЕГЭ по математике');
+    
     authScreen = document.getElementById('authScreen');
     mainApp = document.getElementById('mainApp');
     usernameSpan = document.getElementById('username');
@@ -390,48 +412,59 @@ document.addEventListener('DOMContentLoaded', () => {
     owlTooltip = document.getElementById('owlTooltip');
     
     // События
-    closeTaskBtn.addEventListener('click', closeTask);
-    checkBtn.addEventListener('click', checkAnswer);
-    logoutBtn.addEventListener('click', handleLogout);
+    if (closeTaskBtn) closeTaskBtn.addEventListener('click', closeTask);
+    if (checkBtn) checkBtn.addEventListener('click', checkAnswer);
+    if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
     
-    taskAnswer.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') checkAnswer();
-    });
+    if (taskAnswer) {
+        taskAnswer.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkAnswer();
+        });
+    }
     
     // Авторизация
     const tabs = document.querySelectorAll('.auth-tab');
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
     
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            tabs.forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            if (tab.dataset.tab === 'login') {
-                loginForm.style.display = 'block';
-                registerForm.style.display = 'none';
-            } else {
-                loginForm.style.display = 'none';
-                registerForm.style.display = 'block';
+    if (tabs.length) {
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                if (tab.dataset.tab === 'login') {
+                    loginForm.style.display = 'block';
+                    registerForm.style.display = 'none';
+                } else {
+                    loginForm.style.display = 'none';
+                    registerForm.style.display = 'block';
+                }
+            });
+        });
+    }
+    
+    const loginBtn = document.getElementById('loginBtn');
+    const registerBtn = document.getElementById('registerBtn');
+    const loginEmail = document.getElementById('loginEmail');
+    const loginPassword = document.getElementById('loginPassword');
+    const registerName = document.getElementById('registerName');
+    const registerEmail = document.getElementById('registerEmail');
+    const registerPassword = document.getElementById('registerPassword');
+    
+    if (loginBtn) {
+        loginBtn.addEventListener('click', () => {
+            if (login(loginEmail.value, loginPassword.value)) showMainApp();
+        });
+    }
+    
+    if (registerBtn) {
+        registerBtn.addEventListener('click', () => {
+            if (register(registerEmail.value, registerPassword.value, registerName.value)) {
+                login(registerEmail.value, registerPassword.value);
+                showMainApp();
             }
         });
-    });
-    
-    document.getElementById('loginBtn').addEventListener('click', () => {
-        const email = document.getElementById('loginEmail').value;
-        const pwd = document.getElementById('loginPassword').value;
-        if (login(email, pwd)) showMainApp();
-    });
-    
-    document.getElementById('registerBtn').addEventListener('click', () => {
-        const name = document.getElementById('registerName').value;
-        const email = document.getElementById('registerEmail').value;
-        const pwd = document.getElementById('registerPassword').value;
-        if (register(email, pwd, name)) {
-            login(email, pwd);
-            showMainApp();
-        }
-    });
+    }
     
     const saved = localStorage.getItem('egelingo_user');
     if (saved) {
@@ -440,15 +473,40 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Подсказка совы
-    document.getElementById('owlAvatar').addEventListener('click', () => {
-        owlTooltip.textContent = 'Выбери любое задание, реши и получи XP!';
-        setTimeout(() => owlTooltip.style.display = 'none', 2000);
+    const owlAvatar = document.getElementById('owlAvatar');
+    if (owlAvatar) {
+        owlAvatar.addEventListener('click', () => {
+            owlTooltip.textContent = 'Выбери задание 1–21, реши и получи XP!';
+            owlTooltip.style.display = 'block';
+            setTimeout(() => {
+                owlTooltip.style.display = 'none';
+            }, 3000);
+        });
+    }
+    
+    // Online/offline
+    window.addEventListener('online', () => {
+        if (syncStatus) {
+            syncStatus.className = 'sync-status';
+            const textSpan = syncStatus.querySelector('.sync-text');
+            if (textSpan) textSpan.textContent = 'Синхронизировано';
+            setTimeout(() => syncStatus.style.opacity = '0', 2000);
+        }
     });
     
-    console.log('✅ App ready');
+    window.addEventListener('offline', () => {
+        if (syncStatus) {
+            syncStatus.classList.add('error');
+            const textSpan = syncStatus.querySelector('.sync-text');
+            if (textSpan) textSpan.textContent = 'Офлайн-режим';
+            syncStatus.style.opacity = '1';
+        }
+    });
+    
+    console.log('✅ Приложение готово!');
 });
 
 // Service Worker
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/EGE/sw.js').catch(console.log);
+    navigator.serviceWorker.register('/EGE/sw.js').catch(err => console.log('SW not available'));
 }
