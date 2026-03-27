@@ -1,40 +1,58 @@
 // ==================== КОНФИГУРАЦИЯ ====================
-// Для хранения данных используем JSONBin.io (бесплатный сервис)
-// Зарегистрируйтесь на https://jsonbin.io и получите API ключ
+// Google OAuth Client ID
+const GOOGLE_CLIENT_ID = '549758991862-888ndj9ubsjl5u8r04i804gh05d0mbbv.apps.googleusercontent.com';
+
+// JSONBin.io конфигурация (для облачного хранения прогресса)
 const CLOUD_CONFIG = {
-    // Получите ключ на https://jsonbin.io/v3/signup
-    API_KEY: '$2a$10$YOUR_API_KEY_HERE',  // Замените на свой API ключ
-    BIN_ID: null, // Будет создан автоматически для каждого пользователя
+    API_KEY: '$2a$10$Vxl9lZUaGmUANs2JQBixL.O37Ot8zteKKSAR98p.eP6.aTeQ4Brwu',
+    BIN_ID: null,
     BASE_URL: 'https://api.jsonbin.io/v3/b'
 };
 
-// Банк заданий с сайта «Решу ЕГЭ»
+// Банк заданий с сайта «Решу ЕГЭ» (расширенный)
 const questionBank = {
     orthoepy: [
         {
             text: "В каком слове ударение падает на первый слог?",
             answers: ["красивЕе", "тортЫ", "бАнты", "звонИт"],
             correct: 2,
-            explanation: "В слове «бАнты» ударение падает на первый слог."
+            explanation: "В слове «бАнты» ударение падает на первый слог. Запомните: бАнты, шАрфы, тОрты."
         },
         {
             text: "В каком слове ударение падает на последний слог?",
             answers: ["клАла", "создалА", "нАчал", "понЯв"],
             correct: 1,
-            explanation: "В глаголах женского рода прошедшего времени ударение падает на окончание."
+            explanation: "В глаголах женского рода прошедшего времени ударение падает на окончание: создалА, взялА, спалА."
+        },
+        {
+            text: "В каком слове ударение падает на второй слог?",
+            answers: ["докумЕнт", "каталОг", "красИвее", "квартАл"],
+            correct: 2,
+            explanation: "В слове «красИвее» ударение падает на второй слог. Запомните: красИвее, обеспЕчение, оптОвый."
         }
     ],
     paronyms: [
         {
             text: "В каком предложении вместо слова ДЛИННЫЙ нужно употребить ДЛИТЕЛЬНЫЙ?",
             answers: [
-                "ДЛИННЫЙ хвост павлина переливался.",
-                "Нам предстоял ДЛИННЫЙ путь.",
+                "ДЛИННЫЙ хвост павлина переливался всеми цветами.",
+                "Нам предстоял ДЛИННЫЙ путь через пустыню.",
                 "После ДЛИННОГО совещания все разошлись.",
-                "ДЛИННЫЙ свисток разбудил округу."
+                "ДЛИННЫЙ свисток паровоза разбудил округу."
             ],
             correct: 2,
-            explanation: "ДЛИТЕЛЬНЫЙ — о времени, ДЛИННЫЙ — о размере."
+            explanation: "ДЛИТЕЛЬНЫЙ — о времени, ДЛИННЫЙ — о размере. Правильно: после ДЛИТЕЛЬНОГО совещания."
+        },
+        {
+            text: "В каком предложении вместо слова ВЕЧНЫЙ нужно употребить ВЕКОВЕЧНЫЙ?",
+            answers: [
+                "ВЕЧНЫЙ лес охраняется государством.",
+                "Это был ВЕЧНЫЙ спор.",
+                "ВЕЧНЫЕ ценности остаются неизменными.",
+                "ВЕЧНАЯ мерзлота встречается в Сибири."
+            ],
+            correct: 0,
+            explanation: "ВЕКОВЕЧНЫЙ — очень старый (о лесе), ВЕЧНЫЙ — бесконечный во времени."
         }
     ],
     grammar: [
@@ -47,48 +65,76 @@ const questionBank = {
                 "более КРАСИВЫЙ"
             ],
             correct: 2,
-            explanation: "Правильно: ИХ портфель."
+            explanation: "Правильно: ИХ портфель. Слово «ихний» является просторечным."
+        },
+        {
+            text: "Укажите пример с ошибкой в образовании формы слова",
+            answers: [
+                "ЛЯГТЕ на пол",
+                "ЕДЬТЕ быстрее",
+                "КЛАДИ на место",
+                "ПОЕЗЖАЙ в город"
+            ],
+            correct: 1,
+            explanation: "Правильно: ПОЕЗЖАЙ. Глагола «едь» в русском языке нет."
         }
     ],
     roots: [
         {
             text: "В каком ряду во всех словах пропущена безударная проверяемая гласная корня?",
             answers: [
-                "ст...рожил, ум...лчать, р...сток",
+                "ст...рожил (дом), ум...лчать, р...сток",
                 "зар...сли, пок...сившийся, оп...здание",
                 "п...стух, к...залось, уд...вление",
                 "пл...вец, выр...щенный, р...внина"
             ],
             correct: 2,
-            explanation: "Пастух (пас), казалось (кажется), удивление (диво)."
+            explanation: "Пастух (пас), казалось (кажется), удивление (диво) — проверяемые гласные."
+        },
+        {
+            text: "В каком ряду во всех словах пропущена чередующаяся гласная корня?",
+            answers: [
+                "прик...сновение, выр...сти, з...ря",
+                "отр...сль, р...сток, к...сание",
+                "прил...жение, предл...жить, сл...гать",
+                "все варианты верны"
+            ],
+            correct: 3,
+            explanation: "Во всех словах чередующиеся гласные: -кас-/-кос-, -раст-/-ращ-/-рос-, -зар-/-зор-."
         }
     ],
     punctuation: [
         {
-            text: "В каком варианте ответа правильно указаны все цифры, на месте которых нужны запятые? «Солнце (1) выглянувшее из-за туч (2) осветило лес (3) и (4) заиграло.»",
+            text: "В каком варианте ответа правильно указаны все цифры, на месте которых должны стоять запятые? «Солнце (1) выглянувшее из-за туч (2) осветило лес (3) и (4) заиграло на траве.»",
             answers: ["1,2", "1,2,3", "1,2,3,4", "2,3,4"],
             correct: 0,
-            explanation: "Причастный оборот выделяется запятыми (1 и 2)."
+            explanation: "Причастный оборот «выглянувшее из-за туч» выделяется запятыми (1 и 2)."
+        },
+        {
+            text: "В каком варианте ответа правильно указаны все цифры, на месте которых должны стоять запятые? «Дождь (1) усиливающийся с каждой минутой (2) превратился в ливень (3) и (4) затопил улицы.»",
+            answers: ["1,2", "1,2,3", "1,2,4", "1,2,3,4"],
+            correct: 0,
+            explanation: "Причастный оборот «усиливающийся с каждой минутой» выделяется запятыми (1 и 2)."
         }
     ]
 };
 
-// Объединяем задания
+// Объединяем все задания
 const allQuestions = [
-    ...questionBank.orthoepy,
-    ...questionBank.paronyms,
-    ...questionBank.grammar,
-    ...questionBank.roots,
-    ...questionBank.punctuation
+    ...questionBank.orthoepy,      // 3 вопроса
+    ...questionBank.paronyms,      // 2 вопроса
+    ...questionBank.grammar,       // 2 вопроса
+    ...questionBank.roots,         // 2 вопроса
+    ...questionBank.punctuation    // 2 вопроса
 ];
 
-// Данные уроков
+// Данные уроков (11 вопросов, распределённые по урокам)
 const lessons = [
-    { id: 0, title: "Орфоэпия (ударения)", completed: false, unlocked: true, questionIndices: [0, 1] },
-    { id: 1, title: "Паронимы", completed: false, unlocked: false, questionIndices: [2] },
-    { id: 2, title: "Грамматические нормы", completed: false, unlocked: false, questionIndices: [3] },
-    { id: 3, title: "Правописание корней", completed: false, unlocked: false, questionIndices: [4] },
-    { id: 4, title: "Пунктуация", completed: false, unlocked: false, questionIndices: [5] }
+    { id: 0, title: "Орфоэпия (ударения)", completed: false, unlocked: true, questionIndices: [0, 1, 2] },
+    { id: 1, title: "Паронимы", completed: false, unlocked: false, questionIndices: [3, 4] },
+    { id: 2, title: "Грамматические нормы", completed: false, unlocked: false, questionIndices: [5, 6] },
+    { id: 3, title: "Правописание корней", completed: false, unlocked: false, questionIndices: [7, 8] },
+    { id: 4, title: "Пунктуация", completed: false, unlocked: false, questionIndices: [9, 10] }
 ];
 
 // Глобальное состояние
@@ -109,12 +155,32 @@ let lessonModal, closeModal, lessonTitle, currentQuestionNum, totalQuestions;
 let questionText, answersGrid, explanationDiv, explanationText;
 let reviveModal, reviveBtn, reviveTimerText;
 let completeModal, continueBtn, completeTitle, completeText;
-let authScreen, mainApp, usernameSpan, userAvatar, logoutBtn, syncStatus;
+let authScreen, mainApp, usernameSpan, userAvatar, logoutBtn, syncStatus, googleLoginBtn;
 
 // ==================== GOOGLE AUTH ====================
-// Функция обратного вызова после успешного входа
-window.handleGoogleLogin = async (response) => {
+// Инициализация Google Sign-In
+function initGoogleAuth() {
+    if (!window.google || !window.google.accounts) {
+        console.log('Google API not loaded yet, waiting...');
+        setTimeout(initGoogleAuth, 500);
+        return;
+    }
+    
+    window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleCredentialResponse,
+        auto_select: false,
+        cancel_on_tap_outside: true
+    });
+    
+    console.log('Google Auth initialized');
+}
+
+// Обработчик ответа от Google
+async function handleGoogleCredentialResponse(response) {
     try {
+        showLoading(true);
+        
         // Декодируем JWT токен
         const payload = parseJwt(response.credential);
         
@@ -133,11 +199,13 @@ window.handleGoogleLogin = async (response) => {
         await loadFromCloud();
         
         showMainApp();
+        showLoading(false);
     } catch (error) {
         console.error('Login error:', error);
         showError('Ошибка входа. Попробуйте ещё раз.');
+        showLoading(false);
     }
-};
+}
 
 // Парсинг JWT токена
 function parseJwt(token) {
@@ -149,10 +217,22 @@ function parseJwt(token) {
     return JSON.parse(jsonPayload);
 }
 
-// ==================== ОБЛАЧНОЕ ХРАНЕНИЕ (JSONBin.io) ====================
+// Кнопка входа через Google
+function handleGoogleLogin() {
+    if (window.google && window.google.accounts) {
+        window.google.accounts.id.prompt();
+    } else {
+        showError('Загрузка Google сервисов... Попробуйте обновить страницу');
+        // Повторная попытка инициализации
+        setTimeout(initGoogleAuth, 1000);
+    }
+}
+
+// ==================== ОБЛАЧНОЕ ХРАНЕНИЕ ====================
 // Сохранить прогресс в облако
 async function saveToCloud() {
     if (!currentUser) return;
+    
     if (isSyncing) {
         syncQueue.push(saveToCloud);
         return;
@@ -164,6 +244,8 @@ async function saveToCloud() {
     const progress = {
         userId: currentUser.uid,
         email: currentUser.email,
+        name: currentUser.name,
+        picture: currentUser.picture,
         lastSync: new Date().toISOString(),
         xp: currentXP,
         lives: lives,
@@ -175,12 +257,11 @@ async function saveToCloud() {
     };
     
     try {
-        // Получаем или создаём bin для пользователя
         let binId = localStorage.getItem(`egelingo_bin_${currentUser.uid}`);
         
         if (binId) {
             // Обновляем существующий bin
-            await fetch(`${CLOUD_CONFIG.BASE_URL}/${binId}`, {
+            const response = await fetch(`${CLOUD_CONFIG.BASE_URL}/${binId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -188,6 +269,8 @@ async function saveToCloud() {
                 },
                 body: JSON.stringify(progress)
             });
+            
+            if (!response.ok) throw new Error('Update failed');
         } else {
             // Создаём новый bin
             const response = await fetch(CLOUD_CONFIG.BASE_URL, {
@@ -199,6 +282,9 @@ async function saveToCloud() {
                 },
                 body: JSON.stringify(progress)
             });
+            
+            if (!response.ok) throw new Error('Create failed');
+            
             const data = await response.json();
             binId = data.metadata.id;
             localStorage.setItem(`egelingo_bin_${currentUser.uid}`, binId);
@@ -208,16 +294,20 @@ async function saveToCloud() {
         setTimeout(() => {
             if (syncStatus) syncStatus.style.opacity = '0';
         }, 2000);
+        
+        // Удаляем офлайн-кэш если был
+        localStorage.removeItem(`egelingo_offline_${currentUser.uid}`);
+        
     } catch (error) {
         console.error('Cloud save error:', error);
         updateSyncStatus('error', 'Офлайн-режим');
-        // Сохраняем в очередь для повторной синхронизации
+        // Сохраняем в офлайн-кэш
         localStorage.setItem(`egelingo_offline_${currentUser.uid}`, JSON.stringify(progress));
     } finally {
         isSyncing = false;
         if (syncQueue.length) {
             const next = syncQueue.shift();
-            next();
+            setTimeout(next, 1000);
         }
     }
 }
@@ -253,9 +343,10 @@ async function loadFromCloud() {
                     }
                 });
                 
-                updateSyncStatus('success', 'Загружено');
+                updateSyncStatus('success', 'Загружено из облака');
+                console.log('Cloud data loaded');
             } else {
-                // Bin не найден, используем локальные данные
+                console.log('No cloud data, using local');
                 loadLocalData();
             }
         } catch (error) {
@@ -264,7 +355,23 @@ async function loadFromCloud() {
             updateSyncStatus('error', 'Офлайн-режим');
         }
     } else {
-        loadLocalData();
+        // Проверяем офлайн-кэш
+        const offlineData = localStorage.getItem(`egelingo_offline_${currentUser.uid}`);
+        if (offlineData) {
+            const progress = JSON.parse(offlineData);
+            currentXP = progress.xp || 0;
+            lives = progress.lives !== undefined ? progress.lives : 3;
+            progress.lessons?.forEach(savedLesson => {
+                const lesson = lessons.find(l => l.id === savedLesson.id);
+                if (lesson) {
+                    lesson.completed = savedLesson.completed;
+                    lesson.unlocked = savedLesson.unlocked;
+                }
+            });
+            updateSyncStatus('success', 'Загружено из кэша');
+        } else {
+            loadLocalData();
+        }
     }
     
     saveProgress();
@@ -272,7 +379,7 @@ async function loadFromCloud() {
     updateUI();
 }
 
-// Загрузка локальных данных (офлайн)
+// Загрузка локальных данных
 function loadLocalData() {
     const saved = localStorage.getItem(`egelingo_progress_${currentUser.uid}`);
     if (saved) {
@@ -287,27 +394,17 @@ function loadLocalData() {
                 lesson.unlocked = savedLesson.unlocked;
             }
         });
+        console.log('Local data loaded');
     } else {
+        // Начальная инициализация
         currentXP = 0;
         lives = 3;
         lessons.forEach((lesson, idx) => {
             lesson.completed = false;
             lesson.unlocked = idx === 0;
         });
+        console.log('Fresh start');
     }
-}
-
-// Обновить статус синхронизации
-function updateSyncStatus(status, text) {
-    if (!syncStatus) return;
-    syncStatus.className = 'sync-status';
-    if (status === 'syncing') syncStatus.classList.add('syncing');
-    if (status === 'error') syncStatus.classList.add('error');
-    
-    const textSpan = syncStatus.querySelector('.sync-text');
-    if (textSpan) textSpan.textContent = text;
-    
-    syncStatus.style.opacity = '1';
 }
 
 // ==================== ЛОКАЛЬНОЕ СОХРАНЕНИЕ ====================
@@ -325,15 +422,27 @@ function saveProgress() {
     };
     localStorage.setItem(`egelingo_progress_${currentUser.uid}`, JSON.stringify(progress));
     
-    // Отправляем в облако (с задержкой, чтобы не спамить)
+    // Отправляем в облако с задержкой (не спамим)
     if (window.cloudSaveTimeout) clearTimeout(window.cloudSaveTimeout);
     window.cloudSaveTimeout = setTimeout(() => {
         saveToCloud();
-    }, 2000);
+    }, 3000);
 }
 
-// ==================== ОСТАЛЬНОЙ КОД (аналогично предыдущей версии) ====================
-// Инициализация
+// Обновить статус синхронизации
+function updateSyncStatus(status, text) {
+    if (!syncStatus) return;
+    syncStatus.className = 'sync-status';
+    if (status === 'syncing') syncStatus.classList.add('syncing');
+    if (status === 'error') syncStatus.classList.add('error');
+    
+    const textSpan = syncStatus.querySelector('.sync-text');
+    if (textSpan) textSpan.textContent = text;
+    
+    syncStatus.style.opacity = '1';
+}
+
+// ==================== ИНИЦИАЛИЗАЦИЯ ====================
 document.addEventListener('DOMContentLoaded', () => {
     // Получаем элементы
     authScreen = document.getElementById('authScreen');
@@ -342,6 +451,7 @@ document.addEventListener('DOMContentLoaded', () => {
     userAvatar = document.getElementById('userAvatar');
     logoutBtn = document.getElementById('logoutBtn');
     syncStatus = document.getElementById('syncStatus');
+    googleLoginBtn = document.getElementById('googleLoginBtn');
     
     lessonsPath = document.getElementById('lessonsPath');
     xpFill = document.getElementById('xpFill');
@@ -365,11 +475,22 @@ document.addEventListener('DOMContentLoaded', () => {
     completeTitle = document.getElementById('completeTitle');
     completeText = document.getElementById('completeText');
     
+    // Инициализируем Google Auth
+    initGoogleAuth();
+    
+    // Кнопка входа
+    if (googleLoginBtn) {
+        googleLoginBtn.addEventListener('click', handleGoogleLogin);
+    }
+    
     // Проверяем сохранённую сессию
     const savedUser = localStorage.getItem('egelingo_user');
     if (savedUser) {
         currentUser = JSON.parse(savedUser);
         loadFromCloud().then(() => {
+            showMainApp();
+        }).catch(() => {
+            loadLocalData();
             showMainApp();
         });
     }
@@ -389,18 +510,21 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     // Подсказка совы
-    document.getElementById('owlAvatar').addEventListener('click', () => {
-        if (lessons[0]?.unlocked && !lessons[0]?.completed) {
-            owlTooltip.textContent = 'Нажми на первый урок, чтобы начать!';
-        } else if (lessons[0]?.completed) {
-            owlTooltip.textContent = 'Отлично! Продолжай в том же духе! 🎯';
-        } else {
-            owlTooltip.textContent = 'Начни с первого урока!';
-        }
-        setTimeout(() => {
-            owlTooltip.style.display = 'none';
-        }, 2000);
-    });
+    const owlAvatar = document.getElementById('owlAvatar');
+    if (owlAvatar) {
+        owlAvatar.addEventListener('click', () => {
+            if (lessons[0]?.unlocked && !lessons[0]?.completed) {
+                owlTooltip.textContent = 'Нажми на первый урок, чтобы начать!';
+            } else if (lessons[0]?.completed) {
+                owlTooltip.textContent = 'Отлично! Продолжай в том же духе! 🎯';
+            } else {
+                owlTooltip.textContent = 'Начни с первого урока!';
+            }
+            setTimeout(() => {
+                owlTooltip.style.display = 'none';
+            }, 2000);
+        });
+    }
     
     // Обработка онлайн/офлайн
     window.addEventListener('online', () => {
@@ -417,30 +541,34 @@ function showMainApp() {
     if (authScreen) authScreen.style.display = 'none';
     if (mainApp) mainApp.style.display = 'block';
     if (usernameSpan) usernameSpan.textContent = currentUser?.name || 'Ученик';
-    if (userAvatar) userAvatar.innerHTML = currentUser?.picture ? 
-        `<img src="${currentUser.picture}" style="width: 32px; height: 32px; border-radius: 50%;">` : '👤';
+    if (userAvatar) {
+        if (currentUser?.picture) {
+            userAvatar.innerHTML = `<img src="${currentUser.picture}" alt="avatar">`;
+        } else {
+            userAvatar.textContent = '👤';
+        }
+    }
     
     renderLessons();
     updateUI();
 }
 
 function handleLogout() {
-    localStorage.removeItem('egelingo_user');
-    localStorage.removeItem(`egelingo_progress_${currentUser?.uid}`);
-    currentUser = null;
-    if (authScreen) authScreen.style.display = 'flex';
-    if (mainApp) mainApp.style.display = 'none';
-    
-    // Очищаем Google сессию
-    if (window.google?.accounts?.id) {
-        window.google.accounts.id.disableAutoSelect();
+    if (confirm('Вы уверены, что хотите выйти? Ваш прогресс сохранён в облаке.')) {
+        localStorage.removeItem('egelingo_user');
+        localStorage.removeItem(`egelingo_progress_${currentUser?.uid}`);
+        currentUser = null;
+        if (authScreen) authScreen.style.display = 'flex';
+        if (mainApp) mainApp.style.display = 'none';
+        
+        // Сбрасываем Google сессию
+        if (window.google?.accounts?.id) {
+            window.google.accounts.id.disableAutoSelect();
+        }
     }
 }
 
-// Остальные функции (renderLessons, startLesson, loadQuestion, checkAnswer и т.д.)
-// остаются такими же, как в предыдущей версии, только в saveProgress добавляем вызов saveToCloud()
-// и в updateUI, completeLesson тоже вызываем saveProgress()
-
+// ==================== ОСНОВНАЯ ЛОГИКА ПРИЛОЖЕНИЯ ====================
 function renderLessons() {
     if (!lessonsPath) return;
     lessonsPath.innerHTML = '';
@@ -682,6 +810,13 @@ function showError(message) {
     setTimeout(() => {
         owlTooltip.style.display = 'none';
     }, 3000);
+}
+
+function showLoading(show) {
+    // Можно добавить индикатор загрузки
+    if (show) {
+        if (syncStatus) updateSyncStatus('syncing', 'Загрузка...');
+    }
 }
 
 // PWA регистрация
