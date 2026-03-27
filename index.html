@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>EgeLingo - Подготовка к ЕГЭ по математике</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header с XP и жизнями -->
+        <header class="header">
+            <div class="xp-container">
+                <div class="xp-icon">⭐</div>
+                <div class="xp-bar-wrapper">
+                    <div class="xp-bar">
+                        <div class="xp-fill" id="xpFill"></div>
+                    </div>
+                    <span class="xp-text" id="xpText">0 XP</span>
+                </div>
+            </div>
+            <div class="lives-container" id="livesContainer">
+                <div class="life">❤️</div>
+                <div class="life">❤️</div>
+                <div class="life">❤️</div>
+            </div>
+        </header>
+
+        <!-- Главный экран с дорожкой уроков -->
+        <main class="main-content">
+            <div class="path-container">
+                <h1 class="path-title">📚 Курс ЕГЭ. Профильная математика</h1>
+                <div class="lessons-path" id="lessonsPath">
+                    <!-- Уроки будут добавлены через JS -->
+                </div>
+            </div>
+        </main>
+
+        <!-- Аватар совы с подсказками -->
+        <div class="owl-avatar" id="owlAvatar">
+            <div class="owl-icon">🦉</div>
+            <div class="owl-tooltip" id="owlTooltip">
+                Начни с первого урока!
+            </div>
+        </div>
+
+        <!-- Модальное окно урока -->
+        <div class="modal" id="lessonModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="lessonTitle">Квадратные корни</h2>
+                    <button class="close-modal" id="closeModal">&times;</button>
+                </div>
+                <div class="progress-indicator">
+                    <span id="currentQuestionNum">1</span> / <span id="totalQuestions">3</span>
+                </div>
+                <div class="question-card" id="questionCard">
+                    <p class="question-text" id="questionText">Загрузка...</p>
+                    <div class="answers-grid" id="answersGrid">
+                        <!-- Кнопки ответов -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Окно восстановления жизней -->
+        <div class="modal" id="reviveModal">
+            <div class="modal-content revive-content">
+                <div class="revive-icon">💔</div>
+                <h2>Жизни закончились!</h2>
+                <p id="reviveTimerText">Подождите 30 секунд</p>
+                <button class="btn-revive" id="reviveBtn" disabled>Восстановить</button>
+            </div>
+        </div>
+
+        <!-- Окно завершения урока -->
+        <div class="modal" id="completeModal">
+            <div class="modal-content complete-content">
+                <div class="complete-icon">🎉</div>
+                <h2 id="completeTitle">Урок пройден!</h2>
+                <p id="completeText">+30 XP</p>
+                <button class="btn-continue" id="continueBtn">Продолжить</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
