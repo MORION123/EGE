@@ -1,7 +1,7 @@
 {
-    "name": "EgeLingo - ЕГЭ в игровом формате",
+    "name": "EgeLingo - Тренажёр ЕГЭ",
     "short_name": "EgeLingo",
-    "description": "Подготовка к ЕГЭ по русскому языку с геймификацией",
+    "description": "Подготовка к ЕГЭ по математике, русскому, физике, информатике",
     "start_url": "/EGE/",
     "display": "standalone",
     "theme_color": "#4a6cf7",
