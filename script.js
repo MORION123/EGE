@@ -4,10 +4,10 @@ const CLOUD_CONFIG = {
     BASE_URL: 'https://api.jsonbin.io/v3/b'
 };
 
-// ID бина для хранения всех пользователей (создаётся один раз)
-let USERS_BIN_ID = null;
+// ФИКСИРОВАННЫЙ ID бина для хранения всех пользователей
+const USERS_BIN_ID = '69c60d616887921da853c0a2';
 
-// Банк заданий
+// Банк заданий (остаётся без изменений)
 const questionBank = {
     orthoepy: [
         {
@@ -152,57 +152,7 @@ let completeModal, continueBtn, completeTitle, completeText;
 let authScreen, mainApp, usernameSpan, userAvatar, logoutBtn, syncStatus;
 
 // ==================== ОБЛАЧНОЕ ХРАНЕНИЕ ПОЛЬЗОВАТЕЛЕЙ ====================
-// Загрузка/создание бина с пользователями
-async function initUsersBin() {
-    const savedBinId = localStorage.getItem('egelingo_users_bin_id');
-    
-    if (savedBinId) {
-        USERS_BIN_ID = savedBinId;
-        return;
-    }
-    
-    try {
-        // Пробуем найти существующий бин по метке
-        const searchResponse = await fetch(`${CLOUD_CONFIG.BASE_URL}?meta=false`, {
-            headers: { 'X-Master-Key': CLOUD_CONFIG.API_KEY }
-        });
-        
-        if (searchResponse.ok) {
-            const bins = await searchResponse.json();
-            const existingBin = bins.find(b => b.collection?.name === 'egelingo_users');
-            if (existingBin) {
-                USERS_BIN_ID = existingBin.id;
-                localStorage.setItem('egelingo_users_bin_id', USERS_BIN_ID);
-                return;
-            }
-        }
-    } catch (e) {
-        console.log('Search failed, creating new bin');
-    }
-    
-    // Создаём новый бин
-    const createResponse = await fetch(CLOUD_CONFIG.BASE_URL, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Master-Key': CLOUD_CONFIG.API_KEY,
-            'X-Bin-Private': 'false',
-            'X-Bin-Name': 'egelingo_users'
-        },
-        body: JSON.stringify({ users: {} })
-    });
-    
-    if (createResponse.ok) {
-        const data = await createResponse.json();
-        USERS_BIN_ID = data.metadata.id;
-        localStorage.setItem('egelingo_users_bin_id', USERS_BIN_ID);
-    }
-}
-
-// Получить всех пользователей из облака
 async function getUsersFromCloud() {
-    if (!USERS_BIN_ID) return {};
-    
     try {
         const response = await fetch(`${CLOUD_CONFIG.BASE_URL}/${USERS_BIN_ID}/latest`, {
             headers: { 'X-Master-Key': CLOUD_CONFIG.API_KEY }
@@ -215,16 +165,12 @@ async function getUsersFromCloud() {
     } catch (error) {
         console.error('Error loading users:', error);
     }
-    
     return {};
 }
 
-// Сохранить пользователей в облако
 async function saveUsersToCloud(users) {
-    if (!USERS_BIN_ID) return false;
-    
     try {
-        await fetch(`${CLOUD_CONFIG.BASE_URL}/${USERS_BIN_ID}`, {
+        const response = await fetch(`${CLOUD_CONFIG.BASE_URL}/${USERS_BIN_ID}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -232,14 +178,13 @@ async function saveUsersToCloud(users) {
             },
             body: JSON.stringify({ users: users })
         });
-        return true;
+        return response.ok;
     } catch (error) {
         console.error('Error saving users:', error);
         return false;
     }
 }
 
-// Регистрация
 async function register(email, password, name) {
     email = email.toLowerCase().trim();
     
@@ -271,7 +216,6 @@ async function register(email, password, name) {
     }
 }
 
-// Вход
 async function login(email, password) {
     email = email.toLowerCase().trim();
     
@@ -355,7 +299,7 @@ async function saveToCloud() {
                     'Content-Type': 'application/json',
                     'X-Master-Key': CLOUD_CONFIG.API_KEY,
                     'X-Bin-Private': 'false',
-                    'X-Bin-Name': `progress_${currentUser.uid}`
+                    'X-Bin-Name': `progress_${currentUser.uid.replace(/[^a-zA-Z0-9]/g, '_')}`
                 },
                 body: JSON.stringify(progress)
             });
@@ -748,6 +692,7 @@ function showError(message) {
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('📱 App initializing...');
+    console.log('📀 Using users bin:', USERS_BIN_ID);
     
     authScreen = document.getElementById('authScreen');
     mainApp = document.getElementById('mainApp');
@@ -777,9 +722,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     continueBtn = document.getElementById('continueBtn');
     completeTitle = document.getElementById('completeTitle');
     completeText = document.getElementById('completeText');
-    
-    // Инициализируем облачное хранилище пользователей
-    await initUsersBin();
     
     const tabs = document.querySelectorAll('.auth-tab');
     const loginForm = document.getElementById('loginForm');
