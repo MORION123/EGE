@@ -295,19 +295,86 @@ body {
     color: #718096;
 }
 
-/* ==================== ВЫБОР ПРЕДМЕТА ==================== */
-.subject-selector {
-    display: flex;
-    gap: 10px;
+/* ==================== ВЫБОР ВАРИАНТА ==================== */
+.variant-selector {
+    background: white;
+    border-radius: 30px;
+    padding: 20px;
     margin-bottom: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
 }
 
-.subject-btn {
-    padding: 10px 20px;
-    background: white;
+.variant-selector h2 {
+    font-size: 18px;
+    margin-bottom: 15px;
+    color: #2c5282;
+    text-align: center;
+}
+
+.variants-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 12px;
+}
+
+.variant-btn {
+    padding: 14px 8px;
+    background: #f7fafc;
     border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Nunito', sans-serif;
+    text-align: center;
+    color: #2d3748;
+}
+
+.variant-btn:hover {
+    background: #edf2f7;
+    transform: translateY(-2px);
+    border-color: #4a6cf7;
+}
+
+.variant-btn.active {
+    background: linear-gradient(135deg, #4a6cf7, #6b46c1);
+    color: white;
+    border-color: transparent;
+}
+
+.variant-btn.completed {
+    background: #c6f6d5;
+    border-color: #38a169;
+    color: #276749;
+}
+
+/* ==================== ВЫБОР ЗАДАНИЯ ПОСЛЕ ВЫБОРА ВАРИАНТА ==================== */
+.task-selector {
+    background: white;
+    border-radius: 30px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.task-header-selector {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.task-header-selector h2 {
+    font-size: 20px;
+    color: #2c5282;
+    margin: 0;
+}
+
+.back-to-variants {
+    padding: 8px 16px;
+    background: #f1f5f9;
+    border: none;
     border-radius: 40px;
     font-size: 14px;
     font-weight: 600;
@@ -317,40 +384,11 @@ body {
     color: #4a5568;
 }
 
-.subject-btn:hover {
-    transform: translateY(-2px);
-    border-color: #4a6cf7;
+.back-to-variants:hover {
+    background: #e2e8f0;
 }
 
-.subject-btn.active {
-    background: linear-gradient(135deg, #4a6cf7, #6b46c1);
-    color: white;
-    border-color: transparent;
-}
-
-/* ==================== MAIN CONTENT ==================== */
-.main-content {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 30px;
-    padding: 25px;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-}
-
-.task-selector {
-    background: white;
-    border-radius: 30px;
-    padding: 20px;
-    margin-bottom: 20px;
-}
-
-.task-selector h2 {
-    font-size: 18px;
-    margin-bottom: 15px;
-    color: #2c5282;
-    text-align: center;
-}
-
+/* ==================== ЗАДАНИЯ ==================== */
 .tasks-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
@@ -387,7 +425,7 @@ body {
     font-size: 14px;
 }
 
-/* Task Card */
+/* ==================== КАРТОЧКА ЗАДАНИЯ ==================== */
 .task-card {
     background: white;
     border-radius: 30px;
@@ -423,6 +461,14 @@ body {
     color: #f56565;
 }
 
+.task-progress {
+    text-align: center;
+    margin-bottom: 15px;
+    font-weight: 600;
+    color: #4a6cf7;
+    font-size: 14px;
+}
+
 .task-text {
     font-size: 18px;
     line-height: 1.5;
@@ -437,6 +483,7 @@ body {
     display: flex;
     gap: 15px;
     margin-bottom: 20px;
+    flex-wrap: wrap;
 }
 
 .task-input {
@@ -447,6 +494,7 @@ body {
     font-size: 16px;
     font-family: 'Nunito', sans-serif;
     transition: all 0.2s;
+    min-width: 150px;
 }
 
 .task-input:focus {
@@ -469,6 +517,23 @@ body {
 }
 
 .check-btn:hover {
+    transform: translateY(-2px);
+}
+
+.next-btn {
+    padding: 14px 28px;
+    background: linear-gradient(135deg, #48bb78, #38a169);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s;
+    font-family: 'Nunito', sans-serif;
+}
+
+.next-btn:hover {
     transform: translateY(-2px);
 }
 
@@ -635,6 +700,26 @@ body {
         font-size: 28px;
     }
     
+    .variants-grid {
+        grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
+        gap: 8px;
+    }
+    
+    .variant-btn {
+        padding: 10px 5px;
+        font-size: 14px;
+    }
+    
+    .task-header-selector {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .back-to-variants {
+        width: 100%;
+        text-align: center;
+    }
+    
     .tasks-grid {
         grid-template-columns: repeat(auto-fill, minmax(55px, 1fr));
         gap: 8px;
@@ -659,8 +744,9 @@ body {
         gap: 10px;
     }
     
-    .check-btn {
+    .check-btn, .next-btn {
         padding: 12px;
+        width: 100%;
     }
     
     .owl-icon {
@@ -697,11 +783,6 @@ body {
         font-size: 18px;
     }
     
-    .subject-btn {
-        padding: 6px 12px;
-        font-size: 12px;
-    }
-    
     .achievement-badge {
         padding: 5px 10px;
         font-size: 11px;
@@ -723,6 +804,10 @@ body {
         padding: 20px;
     }
     
+    .variants-grid {
+        grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    }
+    
     .tasks-grid {
         grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
     }
@@ -732,6 +817,10 @@ body {
     .app-container {
         max-width: 800px;
         padding: 30px;
+    }
+    
+    .variants-grid {
+        grid-template-columns: repeat(5, 1fr);
     }
     
     .tasks-grid {
