@@ -4,6 +4,9 @@ const CLOUD_CONFIG = {
     BASE_URL: 'https://api.jsonbin.io/v3/b'
 };
 
+// ID бина для хранения всех пользователей (создаётся один раз)
+let USERS_BIN_ID = null;
+
 // Банк заданий
 const questionBank = {
     orthoepy: [
@@ -148,25 +151,101 @@ let reviveModal, reviveBtn, reviveTimerText;
 let completeModal, continueBtn, completeTitle, completeText;
 let authScreen, mainApp, usernameSpan, userAvatar, logoutBtn, syncStatus;
 
-// ==================== АВТОРИЗАЦИЯ ====================
-const usersDB = {};
-
-function loadUsers() {
-    const saved = localStorage.getItem('egelingo_users');
-    if (saved) {
-        const users = JSON.parse(saved);
-        Object.assign(usersDB, users);
+// ==================== ОБЛАЧНОЕ ХРАНЕНИЕ ПОЛЬЗОВАТЕЛЕЙ ====================
+// Загрузка/создание бина с пользователями
+async function initUsersBin() {
+    const savedBinId = localStorage.getItem('egelingo_users_bin_id');
+    
+    if (savedBinId) {
+        USERS_BIN_ID = savedBinId;
+        return;
+    }
+    
+    try {
+        // Пробуем найти существующий бин по метке
+        const searchResponse = await fetch(`${CLOUD_CONFIG.BASE_URL}?meta=false`, {
+            headers: { 'X-Master-Key': CLOUD_CONFIG.API_KEY }
+        });
+        
+        if (searchResponse.ok) {
+            const bins = await searchResponse.json();
+            const existingBin = bins.find(b => b.collection?.name === 'egelingo_users');
+            if (existingBin) {
+                USERS_BIN_ID = existingBin.id;
+                localStorage.setItem('egelingo_users_bin_id', USERS_BIN_ID);
+                return;
+            }
+        }
+    } catch (e) {
+        console.log('Search failed, creating new bin');
+    }
+    
+    // Создаём новый бин
+    const createResponse = await fetch(CLOUD_CONFIG.BASE_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Master-Key': CLOUD_CONFIG.API_KEY,
+            'X-Bin-Private': 'false',
+            'X-Bin-Name': 'egelingo_users'
+        },
+        body: JSON.stringify({ users: {} })
+    });
+    
+    if (createResponse.ok) {
+        const data = await createResponse.json();
+        USERS_BIN_ID = data.metadata.id;
+        localStorage.setItem('egelingo_users_bin_id', USERS_BIN_ID);
     }
 }
 
-function saveUsers() {
-    localStorage.setItem('egelingo_users', JSON.stringify(usersDB));
+// Получить всех пользователей из облака
+async function getUsersFromCloud() {
+    if (!USERS_BIN_ID) return {};
+    
+    try {
+        const response = await fetch(`${CLOUD_CONFIG.BASE_URL}/${USERS_BIN_ID}/latest`, {
+            headers: { 'X-Master-Key': CLOUD_CONFIG.API_KEY }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            return data.record.users || {};
+        }
+    } catch (error) {
+        console.error('Error loading users:', error);
+    }
+    
+    return {};
 }
 
-function register(email, password, name) {
+// Сохранить пользователей в облако
+async function saveUsersToCloud(users) {
+    if (!USERS_BIN_ID) return false;
+    
+    try {
+        await fetch(`${CLOUD_CONFIG.BASE_URL}/${USERS_BIN_ID}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Master-Key': CLOUD_CONFIG.API_KEY
+            },
+            body: JSON.stringify({ users: users })
+        });
+        return true;
+    } catch (error) {
+        console.error('Error saving users:', error);
+        return false;
+    }
+}
+
+// Регистрация
+async function register(email, password, name) {
     email = email.toLowerCase().trim();
     
-    if (usersDB[email]) {
+    const users = await getUsersFromCloud();
+    
+    if (users[email]) {
         showAuthError('Пользователь с таким email уже существует');
         return false;
     }
@@ -176,19 +255,28 @@ function register(email, password, name) {
         return false;
     }
     
-    usersDB[email] = {
+    users[email] = {
         password: btoa(password),
         name: name || email.split('@')[0],
         createdAt: new Date().toISOString()
     };
     
-    saveUsers();
-    return true;
+    const saved = await saveUsersToCloud(users);
+    
+    if (saved) {
+        return true;
+    } else {
+        showAuthError('Ошибка подключения. Проверьте интернет.');
+        return false;
+    }
 }
 
-function login(email, password) {
+// Вход
+async function login(email, password) {
     email = email.toLowerCase().trim();
-    const user = usersDB[email];
+    
+    const users = await getUsersFromCloud();
+    const user = users[email];
     
     if (!user) {
         showAuthError('Пользователь не найден');
@@ -223,7 +311,7 @@ function showAuthError(message) {
     setTimeout(() => errorDiv.remove(), 3000);
 }
 
-// ==================== ОБЛАЧНОЕ ХРАНЕНИЕ ====================
+// ==================== ОБЛАЧНОЕ ХРАНЕНИЕ ПРОГРЕССА ====================
 async function saveToCloud() {
     if (!currentUser) return;
     if (isSyncing) {
@@ -249,7 +337,7 @@ async function saveToCloud() {
     };
     
     try {
-        let binId = localStorage.getItem(`egelingo_bin_${currentUser.uid}`);
+        let binId = localStorage.getItem(`egelingo_progress_bin_${currentUser.uid}`);
         
         if (binId) {
             await fetch(`${CLOUD_CONFIG.BASE_URL}/${binId}`, {
@@ -266,13 +354,14 @@ async function saveToCloud() {
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Master-Key': CLOUD_CONFIG.API_KEY,
-                    'X-Bin-Private': 'false'
+                    'X-Bin-Private': 'false',
+                    'X-Bin-Name': `progress_${currentUser.uid}`
                 },
                 body: JSON.stringify(progress)
             });
             const data = await response.json();
-            const binId = data.metadata.id;
-            localStorage.setItem(`egelingo_bin_${currentUser.uid}`, binId);
+            binId = data.metadata.id;
+            localStorage.setItem(`egelingo_progress_bin_${currentUser.uid}`, binId);
         }
         
         updateSyncStatus('success', 'Синхронизировано');
@@ -296,7 +385,7 @@ async function loadFromCloud() {
     
     updateSyncStatus('syncing', 'Загрузка...');
     
-    const binId = localStorage.getItem(`egelingo_bin_${currentUser.uid}`);
+    const binId = localStorage.getItem(`egelingo_progress_bin_${currentUser.uid}`);
     
     if (binId) {
         try {
@@ -657,7 +746,7 @@ function showError(message) {
 }
 
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     console.log('📱 App initializing...');
     
     authScreen = document.getElementById('authScreen');
@@ -689,7 +778,8 @@ document.addEventListener('DOMContentLoaded', () => {
     completeTitle = document.getElementById('completeTitle');
     completeText = document.getElementById('completeText');
     
-    loadUsers();
+    // Инициализируем облачное хранилище пользователей
+    await initUsersBin();
     
     const tabs = document.querySelectorAll('.auth-tab');
     const loginForm = document.getElementById('loginForm');
@@ -710,7 +800,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
-    document.getElementById('loginBtn').addEventListener('click', () => {
+    document.getElementById('loginBtn').addEventListener('click', async () => {
         const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPassword').value;
         
@@ -719,14 +809,14 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        if (login(email, password)) {
-            loadFromCloud().then(() => {
-                showMainApp();
-            });
+        const success = await login(email, password);
+        if (success) {
+            await loadFromCloud();
+            showMainApp();
         }
     });
     
-    document.getElementById('registerBtn').addEventListener('click', () => {
+    document.getElementById('registerBtn').addEventListener('click', async () => {
         const name = document.getElementById('registerName').value;
         const email = document.getElementById('registerEmail').value;
         const password = document.getElementById('registerPassword').value;
@@ -736,23 +826,21 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        if (register(email, password, name)) {
-            login(email, password);
-            loadFromCloud().then(() => {
+        const success = await register(email, password, name);
+        if (success) {
+            const loginSuccess = await login(email, password);
+            if (loginSuccess) {
+                await loadFromCloud();
                 showMainApp();
-            });
+            }
         }
     });
     
     const savedUser = localStorage.getItem('egelingo_user');
     if (savedUser) {
         currentUser = JSON.parse(savedUser);
-        loadFromCloud().then(() => {
-            showMainApp();
-        }).catch(() => {
-            loadLocalData();
-            showMainApp();
-        });
+        await loadFromCloud();
+        showMainApp();
     }
     
     closeModal.addEventListener('click', closeLessonModal);
