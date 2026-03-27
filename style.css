@@ -45,11 +45,28 @@ body {
     animation: slideUp 0.5s ease;
 }
 
+/* Logo styles */
 .auth-logo {
-    font-size: 48px;
-    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
     margin-bottom: 20px;
-    color: #667eea;
+}
+
+.logo-img {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+}
+
+.auth-logo span {
+    font-size: 32px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
 }
 
 .auth-card h1 {
@@ -647,6 +664,15 @@ body {
     
     .auth-card h1 {
         font-size: 24px;
+    }
+    
+    .logo-img {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .auth-logo span {
+        font-size: 28px;
     }
     
     .lesson-number {
