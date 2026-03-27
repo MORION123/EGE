@@ -32,22 +32,21 @@
                 </div>
                 
                 <div class="auth-form" id="loginForm">
-                    <input type="email" id="loginEmail" placeholder="Email" class="auth-input">
+                    <input type="text" id="loginUsername" placeholder="Имя пользователя" class="auth-input">
                     <input type="password" id="loginPassword" placeholder="Пароль" class="auth-input">
                     <button class="auth-submit-btn" id="loginBtn">Войти</button>
                 </div>
                 
                 <div class="auth-form" id="registerForm" style="display: none;">
-                    <input type="text" id="registerName" placeholder="Ваше имя" class="auth-input">
-                    <input type="email" id="registerEmail" placeholder="Email" class="auth-input">
-                    <input type="password" id="registerPassword" placeholder="Пароль (мин. 6 символов)" class="auth-input">
+                    <input type="text" id="registerUsername" placeholder="Имя пользователя" class="auth-input">
+                    <input type="password" id="registerPassword" placeholder="Пароль (мин. 4 символа)" class="auth-input">
                     <button class="auth-submit-btn" id="registerBtn">Зарегистрироваться</button>
                 </div>
                 
                 <div class="auth-footer">
                     <span>🎓 21 задание</span>
                     <span>⭐ Система уровней</span>
-                    <span>📊 Статистика</span>
+                    <span>📊 Прогресс на устройстве</span>
                 </div>
             </div>
         </div>
@@ -70,11 +69,6 @@
                 </div>
                 <button class="logout-btn" id="logoutBtn" title="Выйти">🚪</button>
             </header>
-
-            <div class="sync-status" id="syncStatus">
-                <span class="sync-icon">☁️</span>
-                <span class="sync-text">Синхронизировано</span>
-            </div>
 
             <main class="main-content">
                 <!-- Выбор задания -->
