@@ -64,42 +64,89 @@ body {
     line-height: 1.5;
 }
 
-/* Google кнопка */
-.google-login-container {
+/* Auth tabs and forms */
+.auth-tabs {
     display: flex;
-    justify-content: center;
-    margin: 20px 0;
+    gap: 10px;
+    margin-bottom: 25px;
+    background: #f1f5f9;
+    border-radius: 50px;
+    padding: 4px;
 }
 
-.google-btn {
-    background: white;
-    border: 1px solid #dadce0;
-    border-radius: 4px;
-    padding: 12px 24px;
-    font-size: 15px;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    width: 100%;
-    max-width: 280px;
+.auth-tab {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: transparent;
+    font-size: 16px;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    border-radius: 50px;
+    transition: all 0.3s;
     font-family: 'Nunito', sans-serif;
-    color: #3c4043;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    color: #64748b;
 }
 
-.google-btn:hover {
-    background: #f8f9fa;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-    transform: translateY(-1px);
+.auth-tab.active {
+    background: white;
+    color: #4a6cf7;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.google-icon-svg {
-    width: 20px;
-    height: 20px;
+.auth-form {
+    margin-bottom: 20px;
+}
+
+.auth-input {
+    width: 100%;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    font-size: 16px;
+    font-family: 'Nunito', sans-serif;
+    transition: all 0.3s;
+    box-sizing: border-box;
+}
+
+.auth-input:focus {
+    outline: none;
+    border-color: #4a6cf7;
+    box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.1);
+}
+
+.auth-submit-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #4a6cf7, #6b46c1);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s;
+    font-family: 'Nunito', sans-serif;
+    margin-top: 8px;
+}
+
+.auth-submit-btn:hover {
+    transform: translateY(-2px);
+}
+
+.auth-submit-btn:active {
+    transform: translateY(0);
+}
+
+.auth-error {
+    color: #e53e3e;
+    font-size: 14px;
+    margin-top: 10px;
+    text-align: center;
+    background: #fff5f5;
+    padding: 8px;
+    border-radius: 12px;
 }
 
 .auth-footer {
@@ -560,6 +607,17 @@ body {
     transform: scale(0.95);
 }
 
+/* Loading spinner */
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
 /* Animations */
 @keyframes fadeIn {
     from { opacity: 0; }
@@ -581,6 +639,14 @@ body {
 @media (max-width: 480px) {
     .app-container {
         padding: 15px;
+    }
+    
+    .auth-card {
+        padding: 30px 20px;
+    }
+    
+    .auth-card h1 {
+        font-size: 24px;
     }
     
     .lesson-number {
@@ -615,14 +681,53 @@ body {
         max-width: 80px;
     }
     
-    .google-btn {
-        padding: 10px 20px;
-        font-size: 14px;
-        max-width: 260px;
-    }
-    
     .sync-status {
         font-size: 10px;
         padding: 4px 10px;
+    }
+    
+    .auth-input {
+        padding: 12px 14px;
+        font-size: 14px;
+    }
+    
+    .auth-tab {
+        font-size: 14px;
+        padding: 8px;
+    }
+}
+
+/* Tablet */
+@media (min-width: 481px) and (max-width: 768px) {
+    .app-container {
+        padding: 20px;
+    }
+    
+    .lesson-number {
+        width: 65px;
+        height: 65px;
+        font-size: 22px;
+    }
+}
+
+/* Desktop */
+@media (min-width: 769px) {
+    .app-container {
+        max-width: 700px;
+        padding: 30px;
+    }
+    
+    .lesson-number {
+        width: 80px;
+        height: 80px;
+        font-size: 28px;
+    }
+    
+    .lesson-title {
+        font-size: 20px;
+    }
+    
+    .question-text {
+        font-size: 20px;
     }
 }
