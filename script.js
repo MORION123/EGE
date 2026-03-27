@@ -1,38 +1,58 @@
-// ==================== ЗАГРУЗКА ЗАДАНИЙ ИЗ ФАЙЛА ====================
+// ==================== ЗАГРУЗКА ЗАДАНИЙ ====================
 let subjectsBank = {};
+
+// 15 вариантов по 21 заданию
+const variantsCount = 15;
+const tasksPerVariant = 21;
 
 async function loadTasks() {
     try {
         const response = await fetch('/EGE/tasks_math.json');
-        subjectsBank = await response.json();
+        const fullBank = await response.json();
         
-        for (let subject in subjectsBank) {
-            for (let i = 1; i <= 21; i++) {
-                if (!subjectsBank[subject].tasks[i]) {
-                    subjectsBank[subject].tasks[i] = [];
+        // Создаём 15 вариантов
+        subjectsBank = {};
+        for (let v = 1; v <= variantsCount; v++) {
+            subjectsBank[v] = {
+                name: `Вариант ${v}`,
+                tasks: {}
+            };
+            
+            for (let t = 1; t <= tasksPerVariant; t++) {
+                // Берём задания из общего банка или создаём заглушки
+                const sourceTasks = fullBank.math?.tasks[t];
+                if (sourceTasks && sourceTasks.length > 0) {
+                    subjectsBank[v].tasks[t] = [...sourceTasks];
+                } else {
+                    subjectsBank[v].tasks[t] = [
+                        { text: `Вариант ${v}, задание ${t}. Решите и введите ответ.`, answer: `${t}`, solution: `Ответ: ${t}.` }
+                    ];
                 }
-                if (i === 1 && subjectsBank[subject].tasks[i].length < 10) {
-                    const defaultTasks = [];
-                    for (let j = subjectsBank[subject].tasks[i].length + 1; j <= 10; j++) {
-                        defaultTasks.push({
-                            text: `Задание 1.${j}. Решите и введите ответ.`,
-                            answer: `${j}`,
-                            solution: `Ответ: ${j}.`
-                        });
-                    }
-                    subjectsBank[subject].tasks[i] = [...subjectsBank[subject].tasks[i], ...defaultTasks];
+                // Перемешиваем варианты внутри задания
+                for (let i = subjectsBank[v].tasks[t].length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [subjectsBank[v].tasks[t][i], subjectsBank[v].tasks[t][j]] = [subjectsBank[v].tasks[t][j], subjectsBank[v].tasks[t][i]];
                 }
             }
         }
         
         if (currentUser) {
-            renderTasks();
+            renderVariants();
             renderAchievements();
         }
         
-        console.log('✅ Задания загружены');
+        console.log(`✅ Загружено ${variantsCount} вариантов`);
     } catch (error) {
         console.error('Ошибка загрузки заданий:', error);
+        // Создаём заглушки
+        for (let v = 1; v <= variantsCount; v++) {
+            subjectsBank[v] = { name: `Вариант ${v}`, tasks: {} };
+            for (let t = 1; t <= tasksPerVariant; t++) {
+                subjectsBank[v].tasks[t] = [
+                    { text: `Вариант ${v}, задание ${t}. Решите и введите ответ.`, answer: `${t}`, solution: `Ответ: ${t}.` }
+                ];
+            }
+        }
     }
 }
 
@@ -42,7 +62,7 @@ const achievementsList = [
     { id: "ten_tasks", name: "10 заданий", icon: "📚", condition: (stats) => stats.totalSolved >= 10 },
     { id: "fifty_tasks", name: "50 заданий", icon: "🏅", condition: (stats) => stats.totalSolved >= 50 },
     { id: "hundred_tasks", name: "100 заданий", icon: "🎖️", condition: (stats) => stats.totalSolved >= 100 },
-    { id: "perfect_math", name: "Математик", icon: "📐", condition: (stats) => stats.subjectMath >= 20 },
+    { id: "variant_master", name: "Мастер вариантов", icon: "📋", condition: (stats) => stats.completedVariants >= 5 },
     { id: "streak_5", name: "Серия 5", icon: "🔥", condition: (stats) => stats.streak >= 5 },
     { id: "streak_10", name: "Серия 10", icon: "⚡", condition: (stats) => stats.streak >= 10 }
 ];
@@ -52,12 +72,12 @@ let currentUser = null;
 let currentXP = 0;
 let xpToNextLevel = 100;
 let userLevel = 1;
-let currentSubject = "math";
-let completedTasks = {};
+let currentVariant = 1;
+let completedVariants = {}; // { variant: { taskId: [completedIndices] } }
 let currentTaskId = null;
 let currentTaskVariants = [];
 let currentVariantIndex = 0;
-let currentVariant = null;
+let currentVariantData = null;
 let currentTaskResults = [];
 let isAnswered = false;
 
@@ -65,19 +85,18 @@ let userStats = {
     totalSolved: 0,
     correctAnswers: 0,
     streak: 0,
-    subjectMath: 0,
-    subjectRussian: 0,
-    subjectPhysics: 0,
-    subjectInformatics: 0,
+    completedVariants: 0,
     achievements: []
 };
 
 // DOM элементы
 let authScreen, mainApp, usernameSpan, userAvatar, logoutBtn;
-let tasksGrid, taskCard, closeTaskBtn, taskTitle, taskText, taskAnswer, checkBtn, nextBtn;
-let taskFeedback, taskSolution, solutionText, levelBadge, xpFill, xpText, owlTooltip;
-let statsBar, totalTasksSpan, correctPercentSpan, streakSpan;
-let subjectTitle, achievementsGrid, progressSpan;
+let variantsGrid, taskSelector, tasksGrid, taskCard, closeTaskBtn;
+let variantTitle, backToVariantsBtn, taskTitle, taskText, taskAnswer;
+let checkBtn, nextBtn, taskFeedback, taskSolution, solutionText;
+let levelBadge, xpFill, xpText, owlTooltip, statsBar;
+let totalTasksSpan, correctPercentSpan, streakSpan;
+let achievementsGrid, taskProgressSpan;
 
 // ==================== СИСТЕМА УРОВНЕЙ ====================
 function updateLevel() {
@@ -129,8 +148,6 @@ function recordAnswer(isCorrect) {
         userStats.streak = 0;
     }
     userStats.totalSolved++;
-    
-    if (currentSubject === "math") userStats.subjectMath++;
     updateStats();
     checkAchievements();
     saveProgress();
@@ -141,8 +158,7 @@ function checkAchievements() {
     const stats = {
         totalSolved: userStats.totalSolved,
         streak: userStats.streak,
-        subjectMath: userStats.subjectMath,
-        subjectRussian: userStats.subjectRussian
+        completedVariants: userStats.completedVariants
     };
     
     let newUnlocked = false;
@@ -174,11 +190,67 @@ function renderAchievements() {
     });
 }
 
+// ==================== ОТОБРАЖЕНИЕ ВАРИАНТОВ ====================
+function renderVariants() {
+    if (!variantsGrid) return;
+    variantsGrid.innerHTML = '';
+    
+    for (let v = 1; v <= variantsCount; v++) {
+        const btn = document.createElement('button');
+        btn.className = 'variant-btn';
+        btn.textContent = `Вариант ${v}`;
+        btn.dataset.variant = v;
+        
+        // Проверяем, пройден ли вариант
+        const variantCompleted = completedVariants[v] && 
+            Object.keys(completedVariants[v]).length >= tasksPerVariant;
+        if (variantCompleted) {
+            btn.classList.add('completed');
+        }
+        
+        btn.addEventListener('click', () => selectVariant(v));
+        variantsGrid.appendChild(btn);
+    }
+}
+
+function selectVariant(variant) {
+    currentVariant = variant;
+    currentTaskId = null;
+    
+    variantTitle.textContent = subjectsBank[variant].name;
+    taskSelector.style.display = 'block';
+    variantTitle.scrollIntoView({ behavior: 'smooth' });
+    
+    renderTasksForVariant(variant);
+}
+
+function renderTasksForVariant(variant) {
+    if (!tasksGrid) return;
+    tasksGrid.innerHTML = '';
+    const tasks = subjectsBank[variant].tasks;
+    
+    for (let t = 1; t <= tasksPerVariant; t++) {
+        const btn = document.createElement('button');
+        btn.className = 'task-btn';
+        btn.textContent = t;
+        btn.dataset.task = t;
+        
+        const completed = completedVariants[variant]?.[t] || [];
+        const totalCount = tasks[t]?.length || 0;
+        if (completed.length >= totalCount && totalCount > 0) {
+            btn.classList.add('completed');
+            btn.title = 'Все варианты задания пройдены!';
+        }
+        btn.addEventListener('click', () => startTask(t));
+        tasksGrid.appendChild(btn);
+    }
+}
+
 // ==================== ЗАДАНИЯ ====================
 function startTask(taskId) {
-    const variants = subjectsBank[currentSubject]?.tasks[taskId];
+    const variants = subjectsBank[currentVariant].tasks[taskId];
     if (!variants || variants.length === 0) {
-        showTip('Нет заданий для этого номера');
+        showTip('Нет заданий');
         return;
     }
     
@@ -194,18 +266,16 @@ function startTask(taskId) {
         [currentTaskVariants[i], currentTaskVariants[j]] = [currentTaskVariants[j], currentTaskVariants[i]];
     }
     
-    // Показываем кнопки
     if (nextBtn) nextBtn.style.display = 'none';
     if (checkBtn) checkBtn.style.display = 'flex';
     if (checkBtn) checkBtn.disabled = false;
     
     loadNextVariant();
     
-    taskTitle.textContent = `${subjectsBank[currentSubject].name} - Задание ${taskId}`;
+    taskTitle.textContent = `${subjectsBank[currentVariant].name} - Задание ${taskId}`;
     taskCard.style.display = 'block';
     taskCard.scrollIntoView({ behavior: 'smooth' });
     
-    // Убираем кнопку "Показать ошибки" если была
     const oldMistakesBtn = document.getElementById('mistakesBtn');
     if (oldMistakesBtn) oldMistakesBtn.remove();
 }
@@ -216,10 +286,10 @@ function loadNextVariant() {
         return;
     }
     
-    currentVariant = currentTaskVariants[currentVariantIndex];
+    currentVariantData = currentTaskVariants[currentVariantIndex];
     isAnswered = false;
     
-    taskText.textContent = currentVariant.text;
+    taskText.textContent = currentVariantData.text;
     taskAnswer.value = '';
     taskAnswer.disabled = false;
     taskFeedback.className = 'task-feedback';
@@ -229,19 +299,18 @@ function loadNextVariant() {
     
     if (checkBtn) checkBtn.disabled = false;
     if (nextBtn) nextBtn.style.display = 'none';
-    if (progressSpan) progressSpan.textContent = `${currentVariantIndex + 1} / ${currentTaskVariants.length}`;
+    if (taskProgressSpan) taskProgressSpan.textContent = `${currentVariantIndex + 1} / ${currentTaskVariants.length}`;
 }
 
 function checkAnswer() {
     if (isAnswered) return;
-    if (!currentVariant) return;
+    if (!currentVariantData) return;
     
     const userAnswer = taskAnswer.value.trim();
-    const isCorrect = userAnswer === currentVariant.answer;
+    const isCorrect = userAnswer === currentVariantData.answer;
     
-    // Сохраняем результат
     currentTaskResults.push({
-        variant: currentVariant,
+        variant: currentVariantData,
         userAnswer: userAnswer,
         isCorrect: isCorrect
     });
@@ -254,24 +323,23 @@ function checkAnswer() {
         addXP(10);
         recordAnswer(true);
         
-        solutionText.textContent = currentVariant.solution;
+        solutionText.textContent = currentVariantData.solution;
         taskSolution.style.display = 'block';
         
         isAnswered = true;
         taskAnswer.disabled = true;
         if (checkBtn) checkBtn.disabled = true;
         
-        // Показываем кнопку "Далее"
         if (nextBtn) {
             nextBtn.style.display = 'flex';
             nextBtn.textContent = '➡️ Далее';
         }
     } else {
-        taskFeedback.innerHTML = `❌ Неправильно. Правильный ответ: ${currentVariant.answer}`;
+        taskFeedback.innerHTML = `❌ Неправильно. Правильный ответ: ${currentVariantData.answer}`;
         taskFeedback.className = 'task-feedback wrong';
         taskFeedback.style.display = 'block';
         
-        solutionText.textContent = currentVariant.solution;
+        solutionText.textContent = currentVariantData.solution;
         taskSolution.style.display = 'block';
         
         recordAnswer(false);
@@ -280,10 +348,9 @@ function checkAnswer() {
         taskAnswer.disabled = true;
         if (checkBtn) checkBtn.disabled = true;
         
-        // Показываем кнопку "Далее" (не засчитывая задание)
         if (nextBtn) {
             nextBtn.style.display = 'flex';
-            nextBtn.textContent = '➡️ Далее (ошибка)';
+            nextBtn.textContent = '➡️ Далее';
         }
     }
     
@@ -300,6 +367,11 @@ function nextVariant() {
 function finishTask() {
     const mistakes = currentTaskResults.filter(r => !r.isCorrect);
     const correctCount = currentTaskResults.filter(r => r.isCorrect).length;
+    
+    // Сохраняем прогресс по заданию
+    if (!completedVariants[currentVariant]) completedVariants[currentVariant] = {};
+    completedVariants[currentVariant][currentTaskId] = currentTaskResults.map(r => r.isCorrect);
+    saveProgress();
     
     taskFeedback.innerHTML = `🎉 Задание завершено! Правильных: ${correctCount} из ${currentTaskVariants.length}`;
     taskFeedback.className = 'task-feedback correct';
@@ -332,6 +404,15 @@ function finishTask() {
     taskCard.appendChild(chooseBtn);
     
     taskAnswer.disabled = true;
+    
+    // Обновляем кнопку варианта
+    const allTasksCompleted = Object.keys(completedVariants[currentVariant] || {}).length >= tasksPerVariant;
+    if (allTasksCompleted && !userStats.achievements.includes('variant_master')) {
+        userStats.completedVariants++;
+        checkAchievements();
+    }
+    
+    renderTasksForVariant(currentVariant);
 }
 
 function showMistakes(mistakes) {
@@ -411,56 +492,20 @@ function closeTask() {
     currentTaskId = null;
     currentTaskVariants = [];
     currentTaskResults = [];
-    currentVariant = null;
+    currentVariantData = null;
     isAnswered = false;
     
     if (checkBtn) checkBtn.style.display = 'flex';
     if (nextBtn) nextBtn.style.display = 'none';
-    if (progressSpan) progressSpan.textContent = '';
+    if (taskProgressSpan) taskProgressSpan.textContent = '';
     
     const mistakesBtn = document.getElementById('mistakesBtn');
     if (mistakesBtn) mistakesBtn.remove();
 }
 
-function renderTasks() {
-    if (!tasksGrid || !subjectsBank[currentSubject]) return;
-    tasksGrid.innerHTML = '';
-    const tasks = subjectsBank[currentSubject].tasks;
-    
-    for (let i = 1; i <= 21; i++) {
-        const btn = document.createElement('button');
-        btn.className = 'task-btn';
-        btn.textContent = i;
-        btn.dataset.task = i;
-        
-        const completedCount = completedTasks[currentSubject]?.[i]?.length || 0;
-        const totalCount = tasks[i]?.length || 0;
-        if (completedCount >= totalCount && totalCount > 0) {
-            btn.classList.add('completed');
-            btn.title = 'Все варианты пройдены!';
-        }
-        btn.addEventListener('click', () => startTask(i));
-        tasksGrid.appendChild(btn);
-    }
-    
-    subjectTitle.textContent = `📌 ${subjectsBank[currentSubject].name} - Выбери задание`;
-}
-
-function changeSubject(subject) {
-    if (!subjectsBank[subject]) return;
-    currentSubject = subject;
-    renderTasks();
-    
-    document.querySelectorAll('.subject-btn').forEach(btn => {
-        if (btn.dataset.subject === subject) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
-        }
-    });
-    
+function backToVariants() {
+    taskSelector.style.display = 'none';
     closeTask();
-    saveProgress();
 }
 
 function showTip(msg) {
@@ -523,43 +568,32 @@ function loadProgress() {
     if (saved) {
         const data = JSON.parse(saved);
         currentXP = data.xp || 0;
-        completedTasks = data.completedTasks || {};
+        completedVariants = data.completedVariants || {};
         userStats = data.userStats || {
-            totalSolved: 0, correctAnswers: 0, streak: 0,
-            subjectMath: 0, subjectRussian: 0, subjectPhysics: 0, subjectInformatics: 0,
-            achievements: []
+            totalSolved: 0, correctAnswers: 0, streak: 0, completedVariants: 0, achievements: []
         };
-        currentSubject = data.currentSubject || "math";
         updateLevel();
         updateStats();
     } else {
         currentXP = 0;
-        completedTasks = {};
+        completedVariants = {};
         userStats = {
-            totalSolved: 0, correctAnswers: 0, streak: 0,
-            subjectMath: 0, subjectRussian: 0, subjectPhysics: 0, subjectInformatics: 0,
-            achievements: []
+            totalSolved: 0, correctAnswers: 0, streak: 0, completedVariants: 0, achievements: []
         };
         updateLevel();
         updateStats();
     }
-    renderTasks();
+    renderVariants();
     renderAchievements();
-    
-    document.querySelectorAll('.subject-btn').forEach(btn => {
-        if (btn.dataset.subject === currentSubject) {
-            btn.classList.add('active');
-        }
-    });
+    taskSelector.style.display = 'none';
 }
 
 function saveProgress() {
     if (!currentUser) return;
     localStorage.setItem(`egelingo_progress_${currentUser.uid}`, JSON.stringify({
         xp: currentXP,
-        completedTasks: completedTasks,
-        userStats: userStats,
-        currentSubject: currentSubject
+        completedVariants: completedVariants,
+        userStats: userStats
     }));
 }
 
@@ -592,20 +626,25 @@ function showAuthError(msg) {
 
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('📱 EgeLingo v4.1 - Отдельная кнопка "Далее"');
+    console.log('📱 EgeLingo v5.0 - Варианты ЕГЭ');
     
     authScreen = document.getElementById('authScreen');
     mainApp = document.getElementById('mainApp');
     usernameSpan = document.getElementById('username');
     userAvatar = document.getElementById('userAvatar');
     logoutBtn = document.getElementById('logoutBtn');
+    variantsGrid = document.getElementById('variantsGrid');
+    taskSelector = document.getElementById('taskSelector');
     tasksGrid = document.getElementById('tasksGrid');
+    variantTitle = document.getElementById('variantTitle');
+    backToVariantsBtn = document.getElementById('backToVariantsBtn');
     taskCard = document.getElementById('taskCard');
     closeTaskBtn = document.getElementById('closeTaskBtn');
     taskTitle = document.getElementById('taskTitle');
     taskText = document.getElementById('taskText');
     taskAnswer = document.getElementById('taskAnswer');
     checkBtn = document.getElementById('checkBtn');
+    nextBtn = document.getElementById('nextBtn');
     taskFeedback = document.getElementById('taskFeedback');
     taskSolution = document.getElementById('taskSolution');
     solutionText = document.getElementById('solutionText');
@@ -617,38 +656,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     totalTasksSpan = document.getElementById('totalTasks');
     correctPercentSpan = document.getElementById('correctPercent');
     streakSpan = document.getElementById('streak');
-    subjectTitle = document.getElementById('subjectTitle');
     achievementsGrid = document.getElementById('achievementsGrid');
+    taskProgressSpan = document.getElementById('taskProgress');
     
-    // Создаём кнопку "Далее"
-    const buttonsDiv = document.querySelector('.task-input-area');
-    if (buttonsDiv && !nextBtn) {
-        nextBtn = document.createElement('button');
-        nextBtn.textContent = '➡️ Далее';
-        nextBtn.className = 'check-btn';
-        nextBtn.style.background = '#48bb78';
-        nextBtn.style.display = 'none';
-        nextBtn.onclick = () => nextVariant();
-        buttonsDiv.appendChild(nextBtn);
-    }
-    
-    // Создаём индикатор прогресса
-    progressSpan = document.createElement('div');
-    progressSpan.id = 'taskProgress';
-    progressSpan.style.cssText = 'text-align: center; margin-bottom: 15px; font-weight: 600; color: #4a6cf7;';
-    const questionCard = document.querySelector('.question-card');
-    if (questionCard) {
-        questionCard.insertBefore(progressSpan, taskText);
-    }
-    
+    if (backToVariantsBtn) backToVariantsBtn.addEventListener('click', backToVariants);
     if (closeTaskBtn) closeTaskBtn.addEventListener('click', closeTask);
     if (checkBtn) checkBtn.addEventListener('click', checkAnswer);
+    if (nextBtn) nextBtn.addEventListener('click', nextVariant);
     if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
     if (taskAnswer) taskAnswer.addEventListener('keypress', (e) => { if (e.key === 'Enter') checkAnswer(); });
-    
-    document.querySelectorAll('.subject-btn').forEach(btn => {
-        btn.addEventListener('click', () => changeSubject(btn.dataset.subject));
-    });
     
     const tabs = document.querySelectorAll('.auth-tab');
     const loginForm = document.getElementById('loginForm');
@@ -701,7 +717,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const owlAvatar = document.getElementById('owlAvatar');
     if (owlAvatar) {
         owlAvatar.addEventListener('click', () => {
-            showTip('Выбери задание 1–21 и реши все примеры!');
+            showTip('Выбери вариант и решай задания по порядку!');
         });
     }
     
